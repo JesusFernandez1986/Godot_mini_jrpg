@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "shadow_ent"
+display_name = "Ent sombrío"
+base_hp = 42
+attack = 13
+defense = 7
+intent = "Raíces del vacío"
+xp_reward = 26
+gold_reward = 31
+sprite_index = 2

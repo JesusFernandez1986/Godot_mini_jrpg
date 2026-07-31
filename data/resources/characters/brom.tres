@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "brom"
+display_name = "Brom"
+role = "Guardián rúnico"
+base_level = 3
+base_hp = 52
+base_mp = 6
+attack = 16
+defense = 17
+magic = 4
+speed = 5
+sprite_index = 2
+element = "earth"
+weapon = "hammer"
+weaknesses = Array[String](["wind"])
+resistances = Array[String](["earth"])

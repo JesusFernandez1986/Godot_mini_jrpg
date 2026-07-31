@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lunar_wolf"
+display_name = "Lobo lunar"
+base_hp = 26
+attack = 9
+defense = 4
+intent = "Colmillo astral"
+xp_reward = 18
+gold_reward = 22
+sprite_index = 1

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "veil_cultist"
+display_name = "Cultista del Velo"
+base_hp = 38
+attack = 15
+defense = 6
+intent = "Letanía sin nombre"
+xp_reward = 28
+gold_reward = 25
+sprite_index = 4
+rank = "normal"
+phase3_atlas = true
+speed = 11
+weaknesses = Array[String](["light", "sword"])
+resistances = Array[String](["dark"])
+break_shield = 3
+ai_phase_1 = Array[String](["dark", "attack"])
+ai_phase_2 = Array[String](["silence", "dark"])
+ai_phase_3 = Array[String](["fear", "sleep", "dark"])
+loot_item = "Éter estelar"
+loot_chance = 0.35

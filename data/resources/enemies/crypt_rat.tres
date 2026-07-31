@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "crypt_rat"
+display_name = "Rata de cripta"
+base_hp = 22
+attack = 8
+defense = 3
+intent = "Mordisco necrótico"
+xp_reward = 14
+gold_reward = 12
+sprite_index = 0
+rank = "normal"
+phase3_atlas = true
+speed = 12
+weaknesses = Array[String](["sword", "fire"])
+resistances = Array[String](["dark"])
+break_shield = 1
+ai_phase_1 = Array[String](["attack"])
+ai_phase_2 = Array[String](["attack", "poison"])
+ai_phase_3 = Array[String](["poison", "attack"])
+loot_item = "Pan de viaje"
+loot_chance = 0.35

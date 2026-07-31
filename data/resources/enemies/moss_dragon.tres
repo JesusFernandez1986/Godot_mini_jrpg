@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "moss_dragon"
+display_name = "Dragón de musgo"
+base_hp = 58
+attack = 17
+defense = 10
+intent = "Aliento esmeralda"
+xp_reward = 34
+gold_reward = 40
+sprite_index = 3

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "amber_wisp"
+display_name = "Fuego fatuo de ámbar"
+base_hp = 25
+attack = 13
+defense = 4
+intent = "Ascua del recuerdo"
+xp_reward = 21
+gold_reward = 17
+sprite_index = 2
+rank = "normal"
+phase3_atlas = true
+speed = 14
+weaknesses = Array[String](["ice", "staff"])
+resistances = Array[String](["fire", "lightning"])
+break_shield = 2
+ai_phase_1 = Array[String](["fire", "attack"])
+ai_phase_2 = Array[String](["silence", "fire"])
+ai_phase_3 = Array[String](["regeneration", "fire", "fear"])
+loot_item = "Éter estelar"
+loot_chance = 0.3

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lyra"
+display_name = "Lyra"
+role = "Astrómante"
+base_level = 2
+base_hp = 29
+base_mp = 18
+attack = 5
+defense = 6
+magic = 15
+speed = 10
+sprite_index = 1
+element = "lightning"
+weapon = "staff"
+weaknesses = Array[String](["earth"])
+resistances = Array[String](["lightning"])

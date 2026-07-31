@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "ossuary_spider"
+display_name = "Araña de osario"
+base_hp = 30
+attack = 12
+defense = 5
+intent = "Telaraña de fémures"
+xp_reward = 22
+gold_reward = 19
+sprite_index = 3
+rank = "normal"
+phase3_atlas = true
+speed = 13
+weaknesses = Array[String](["fire", "bow"])
+resistances = Array[String](["dark"])
+break_shield = 2
+ai_phase_1 = Array[String](["attack", "poison"])
+ai_phase_2 = Array[String](["blind", "attack"])
+ai_phase_3 = Array[String](["sleep", "poison"])
+loot_item = "Poción menor"
+loot_chance = 0.45

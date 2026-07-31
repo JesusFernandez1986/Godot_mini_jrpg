@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/quest_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "chapter_brumaforja"
+title = "Capítulo II · El corazón de la montaña"
+objective = "Busca a Brom en las forjas de la montaña."
+chapter = 2
+location_id = "brumaforja"

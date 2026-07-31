@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "seris"
+display_name = "Seris"
+role = "Arquera lunar"
+base_level = 4
+base_hp = 35
+base_mp = 14
+attack = 14
+defense = 8
+magic = 11
+speed = 17
+sprite_index = 3
+element = "ice"
+weapon = "bow"
+weaknesses = Array[String](["fire"])
+resistances = Array[String](["ice"])

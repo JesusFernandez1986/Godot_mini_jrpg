@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "hollow_lion"
+display_name = "León de la Corona Hueca"
+base_hp = 180
+attack = 23
+defense = 14
+intent = "Rugido de los olvidados"
+xp_reward = 150
+gold_reward = 160
+sprite_index = 7
+rank = "boss"
+phase3_atlas = true
+speed = 15
+weaknesses = Array[String](["light", "fire"])
+resistances = Array[String](["dark", "earth", "hammer"])
+break_shield = 7
+ai_phase_1 = Array[String](["attack", "fear", "dark"])
+ai_phase_2 = Array[String](["silence", "attack", "sleep", "dark"])
+ai_phase_3 = Array[String](["regeneration", "fear", "blind", "dark", "attack"])
+loot_item = "Poción menor"
+loot_chance = 1.0
+loot_amount = 5

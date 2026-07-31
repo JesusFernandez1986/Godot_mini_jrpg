@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "minor_potion"
+display_name = "Poción menor"
+description = "Restaura 20 PV a un miembro del grupo."
+kind = 0
+power = 20
+price = 5
+restores = "hp"

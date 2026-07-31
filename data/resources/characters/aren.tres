@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "aren"
+display_name = "Aren"
+role = "Caballero del Cristal"
+base_level = 1
+base_hp = 38
+base_mp = 8
+attack = 12
+defense = 9
+magic = 5
+speed = 8
+sprite_index = 0
+element = "fire"
+weapon = "sword"
+weaknesses = Array[String](["ice"])
+resistances = Array[String](["fire"])

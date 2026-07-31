@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "oathbreaker_knight"
+display_name = "Caballero Perjuro"
+base_hp = 105
+attack = 19
+defense = 12
+intent = "Mandoble del juramento"
+xp_reward = 75
+gold_reward = 85
+sprite_index = 6
+rank = "miniboss"
+phase3_atlas = true
+speed = 12
+weaknesses = Array[String](["lightning", "ice"])
+resistances = Array[String](["earth", "dark", "sword"])
+break_shield = 5
+ai_phase_1 = Array[String](["attack", "fear", "attack"])
+ai_phase_2 = Array[String](["dark", "silence", "attack"])
+ai_phase_3 = Array[String](["regeneration", "sleep", "dark", "attack"])
+loot_item = "Éter estelar"
+loot_chance = 1.0
+loot_amount = 2

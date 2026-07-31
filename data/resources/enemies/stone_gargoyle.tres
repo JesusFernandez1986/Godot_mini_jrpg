@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "stone_gargoyle"
+display_name = "Gárgola de piedra"
+base_hp = 45
+attack = 14
+defense = 10
+intent = "Picado de granito"
+xp_reward = 30
+gold_reward = 27
+sprite_index = 5
+rank = "normal"
+phase3_atlas = true
+speed = 7
+weaknesses = Array[String](["earth", "hammer"])
+resistances = Array[String](["wind", "sword"])
+break_shield = 4
+ai_phase_1 = Array[String](["attack", "wind"])
+ai_phase_2 = Array[String](["blind", "attack", "wind"])
+ai_phase_3 = Array[String](["regeneration", "fear", "attack"])
+loot_item = "Pan de viaje"
+loot_chance = 0.55
+loot_amount = 2

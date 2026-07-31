@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/enemy_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "hollow_sentinel"
+display_name = "Centinela hueco"
+base_hp = 34
+attack = 11
+defense = 8
+intent = "Guardia espectral"
+xp_reward = 20
+gold_reward = 18
+sprite_index = 1
+rank = "normal"
+phase3_atlas = true
+speed = 6
+weaknesses = Array[String](["hammer", "lightning"])
+resistances = Array[String](["sword", "earth"])
+break_shield = 3
+ai_phase_1 = Array[String](["attack", "defend"])
+ai_phase_2 = Array[String](["attack", "silence"])
+ai_phase_3 = Array[String](["fear", "attack"])
+loot_item = "Poción menor"
+loot_chance = 0.4
