@@ -17,6 +17,8 @@ const CITY_VALDORIA: Texture2D = preload("res://assets/city_valdoria.png")
 const CITY_BRUMAFORJA: Texture2D = preload("res://assets/city_brumaforja.png")
 const CITY_CELESTIA: Texture2D = preload("res://assets/city_celestia.png")
 const CITY_SYLVARAN: Texture2D = preload("res://assets/city_sylvaran.png")
+const HOLLOW_CROWN_ART: Texture2D = preload("res://assets/phase22/hollow_crown.png")
+const HALL_OF_NAMES: Texture2D = preload("res://assets/phase22/hall_of_names.png")
 const HD2D_STAGE_SCENE: PackedScene = preload("res://world/hd2d_stage.tscn")
 const AUDIO_DIRECTOR_SCRIPT: Script = preload("res://audio/audio_director.gd")
 
@@ -48,6 +50,7 @@ var narrative_system := NarrativeSystem.new()
 var hero_story_system := HeroStorySystem.new()
 var city_life_system := CityLifeSystem.new()
 var camera_system := CameraSystem.new()
+var cinematic_director := CinematicDirector.new()
 var hd2d_stage: Node
 var audio_director: Node
 var performance_budget: PerformanceBudgetSystem
@@ -57,6 +60,7 @@ var sanctuary_controller: SanctuaryController
 @onready var vertical_slice_hud: Node = $VerticalSliceHUD
 @onready var dialogue_hud: Node = $DialogueHUD
 @onready var battle_hud: Node = $BattleHUD
+@onready var cinematic_overlay: Node = $CinematicOverlay
 var locations: Array = []
 var save_base_dir := SaveSystem.SAVE_DIR
 var menu_return_state := "world_map"
@@ -259,6 +263,7 @@ func new_game() -> void:
 	battle_target_index = 0
 	resonance_tutorial_seen = false
 	active_directed_scene = ""
+	cinematic_director.end_sequence()
 	world_exploration_state = WorldExplorationSystem.create_state()
 	city_life_state = city_life_system.create_state()
 	dungeon_exploration_state = DungeonExplorationSystem.create_state()
@@ -293,6 +298,7 @@ func _process(delta: float) -> void:
 		sanctuary_controller.update_animation(delta)
 	if not reduced_motion: npc_animation_elapsed += delta
 	if not active_directed_scene.is_empty(): directed_scene_elapsed += delta
+	cinematic_director.update(delta)
 	var city_music_cue := str(city_life_system.city(current_city).get("music", "")) if game_state == "city" else ""
 	audio_director.sync_context(game_state, current_city, current_dungeon, directed_music_cue, city_music_cue)
 	if game_state == "dialogue":
@@ -354,6 +360,9 @@ func update_screen_scenes() -> void:
 			choice_labels.append(str((choice as Dictionary).get("text", "")) + "  " + NarrativeDirectionSystem.choice_hint(choice as Dictionary))
 		var line := dialogue_system.current_pair()
 		dialogue_hud.configure(str(line[0]), dialogue_system.visible_text(), str(metadata.get("expression", "neutral")), directed_music_cue, dialogue_system.index, dialogue_system.lines.size(), dialogue_system.is_line_revealed(), choice_labels, dialogue_choice_index)
+	cinematic_overlay.visible = game_state == "dialogue" and cinematic_director.active
+	if cinematic_overlay.visible:
+		cinematic_overlay.configure(cinematic_director.overlay_snapshot())
 	battle_hud.visible = game_state == "battle" and not party_battle.is_empty()
 	if battle_hud.visible:
 		update_battle_hud()
@@ -368,7 +377,9 @@ func update_battle_hud() -> void:
 	var active_actor := PartyBattleSystem.current_actor_id(party_battle)
 	for member in party_battle["allies"] as Array:
 		var statuses: Dictionary = (party_battle["ally_statuses"] as Dictionary).get(str((member as Dictionary)["id"]), {})
-		party_cards.append({"name":member["name"], "hp":member["hp"], "max_hp":member["max_hp"], "mp":member["mp"], "max_mp":member["max_mp"], "status":battle_status_text(statuses), "active":ally_actor_id_for_ui(member) == active_actor})
+		var identity := CombatIdentitySystem.hero(str((member as Dictionary).get("id", "")))
+		var focus := int((party_battle.get("focus", {}) as Dictionary).get(str((member as Dictionary).get("id", "")), 0))
+		party_cards.append({"name":member["name"], "hp":member["hp"], "max_hp":member["max_hp"], "mp":member["mp"], "max_mp":member["max_mp"], "status":battle_status_text(statuses), "identity":identity.get("name", ""), "focus":focus, "active":ally_actor_id_for_ui(member) == active_actor})
 	var living := PartyBattleSystem.living_allies(party_battle)
 	var target_name := str(living[battle_target_index]["name"]) if not living.is_empty() and battle_target_index < living.size() else "—"
 	var active_name := str(current_battle_member().get("name", "—"))
@@ -586,6 +597,8 @@ func handle_dialogue_input(event: InputEvent) -> void:
 		if dialogue_system.advance():
 			finish_dialogue()
 		else:
+			if cinematic_director.active:
+				cinematic_director.cue(dialogue_system.current_metadata())
 			action_animation = "talk"
 			action_time = 0.0
 			action_duration = 0.22
@@ -1008,7 +1021,7 @@ func activate_journal_item() -> void:
 			show_notification("Completa los 32 capítulos personales para abrir el final común.")
 			return
 		hero_story_state["finale_status"] = "active"
-		start_dialogue(hero_story_system.finale_dialogue_lines(), menu_return_state, "hero_finale", "sanctuary")
+		start_dialogue(hero_story_system.finale_dialogue_lines(), menu_return_state, "hero_finale", "hall_of_names")
 		return
 	if entry_type == "faction_quest":
 		var quest_id := str(entry["id"])
@@ -1065,6 +1078,16 @@ func close_game_menu() -> void:
 
 func start_dialogue(lines: Array, return_state: String, completion: String, backdrop: String) -> void:
 	dialogue_system.begin(lines, return_state, completion, backdrop)
+	var cinematic_sequences := {
+		"vertical_slice_intro":"vertical_slice_intro",
+		"battle_hollow_lion":"battle_hollow_lion",
+		"hero_finale":"common_finale",
+		"finale":"finale"
+	}
+	if cinematic_sequences.has(completion):
+		cinematic_director.begin_sequence(str(cinematic_sequences[completion]), bool((completion_state.get("accessibility", {}) as Dictionary).get("reduced_motion", false)))
+		if not lines.is_empty() and lines[0] is Dictionary:
+			cinematic_director.cue(lines[0] as Dictionary)
 	game_state = "dialogue"
 	action_animation = "talk"
 	action_time = 0.0
@@ -1081,6 +1104,8 @@ func start_directed_scene(scene_id: String, return_state: String, completion: St
 	directed_backdrop = backdrop
 	directed_scene_elapsed = 0.0
 	dialogue_choice_index = 0
+	var sequence_id := scene_id if (cinematic_director.data.get("sequences", {}) as Dictionary).has(scene_id) else "directed_scene"
+	cinematic_director.begin_sequence(sequence_id, bool((completion_state.get("accessibility", {}) as Dictionary).get("reduced_motion", false)))
 	load_directed_node()
 	return true
 
@@ -1090,6 +1115,7 @@ func load_directed_node() -> void:
 		complete_directed_scene()
 		return
 	directed_music_cue = str(line.get("music", directed_music_cue))
+	cinematic_director.cue(line)
 	dialogue_system.begin([line], directed_return_state, directed_completion, directed_backdrop)
 	game_state = "dialogue"
 	action_animation = "talk"
@@ -1113,6 +1139,7 @@ func advance_directed_scene(choice_index: int = -1) -> void:
 func complete_directed_scene() -> void:
 	var completed_scene := active_directed_scene
 	active_directed_scene = ""
+	cinematic_director.end_sequence()
 	game_state = directed_return_state
 	dialogue_system.lines = []
 	dialogue_system.index = 0
@@ -1146,6 +1173,7 @@ func finish_dialogue() -> void:
 		complete_directed_scene_with_default_choices()
 		return
 	var completion := dialogue_system.completion
+	cinematic_director.end_sequence()
 	game_state = dialogue_system.return_state
 	dialogue_system.lines = []
 	dialogue_system.index = 0
@@ -1886,7 +1914,7 @@ func initialize_party_battle() -> void:
 		notification += " " + " ".join(opening_messages)
 	if not resonance_tutorial_seen:
 		resonance_tutorial_seen = true
-		notification += " Explota debilidades para generar Resonancia y romper la defensa."
+		notification += " Explota debilidades para generar Resonancia. Cada turno suma Ímpetu; ART lo consume para potenciar la identidad de cada héroe."
 
 func sync_party_battle() -> void:
 	if party_battle.is_empty(): return
@@ -1894,7 +1922,7 @@ func sync_party_battle() -> void:
 	enemy_hp = int(runtime_enemy["hp"])
 	enemy_max_hp = int(runtime_enemy["max_hp"])
 	PartyBattleSystem.update_enemy_phase(party_battle)
-	enemy_intent = PartyBattleSystem.predicted_enemy_action(party_battle).capitalize()
+	enemy_intent = PartyBattleSystem.predicted_enemy_intent(party_battle)
 
 func current_battle_member() -> Dictionary:
 	return PartyBattleSystem.current_ally(party_battle) if not party_battle.is_empty() else party[0] as Dictionary
@@ -2026,7 +2054,7 @@ func defeat_enemy() -> void:
 	action_time = 0.0
 	action_duration = 0.9
 	if crystals == guardians.size():
-		start_dialogue(StoryData.get_story_lines(5), "victory", "finale", "sanctuary")
+		start_dialogue(StoryData.get_story_lines(5), "victory", "finale", "hall_of_names")
 	else:
 		game_state = "explore"
 		autosave()
@@ -2328,6 +2356,7 @@ func apply_loaded_data(data: Dictionary) -> void:
 	if not active_directed_scene.is_empty():
 		directed_return_state = game_state
 		directed_backdrop = current_city if current_city in ["valdoria", "brumaforja", "celestia", "sylvaran"] else "world"
+		cinematic_director.begin_sequence(active_directed_scene if (cinematic_director.data.get("sequences", {}) as Dictionary).has(active_directed_scene) else "directed_scene", bool((completion_state.get("accessibility", {}) as Dictionary).get("reduced_motion", false)))
 		load_directed_node()
 
 func wrap_text(text: String, max_characters: int) -> Array[String]:
@@ -2372,7 +2401,9 @@ func draw_bar(position: Vector2, size: Vector2, current: int, maximum: int, tint
 	GameUI.bar(self, position, size, current, maximum, tint)
 
 func draw_background_for(location_id: String) -> void:
-	if location_id == "world":
+	if location_id == "hall_of_names":
+		draw_texture_rect(HALL_OF_NAMES, WORLD, false)
+	elif location_id == "world":
 		draw_texture_rect(WORLD_MAP, WORLD, false)
 	elif location_id == "sanctuary":
 		draw_texture_rect(SANCTUARY, WORLD, false)
@@ -2765,15 +2796,9 @@ func draw_exploration_background(texture: Texture2D) -> void:
 
 func draw_dialogue() -> void:
 	var metadata := dialogue_system.current_metadata()
-	var camera_cue := str(metadata.get("camera", ""))
-	var camera_offset := Vector2.ZERO
-	var camera_zoom := 1.0
-	if not active_directed_scene.is_empty():
-		if camera_cue == "close_up": camera_zoom = 1.08
-		elif camera_cue == "pan_left": camera_offset.x = -18.0 + sin(directed_scene_elapsed * 0.8) * 8.0
-		elif camera_cue == "pan_right": camera_offset.x = 18.0 - sin(directed_scene_elapsed * 0.8) * 8.0
-		elif camera_cue == "pan_up": camera_offset.y = -14.0
-		draw_set_transform(Vector2(480, 270) - Vector2(480, 270) * camera_zoom + camera_offset, 0.0, Vector2.ONE * camera_zoom)
+	if cinematic_director.active:
+		var cinematic_transform := cinematic_director.canvas_transform()
+		draw_set_transform(cinematic_transform["origin"], 0.0, Vector2.ONE * float(cinematic_transform["zoom"]))
 	draw_background_for(dialogue_system.backdrop)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	draw_rect(WORLD, Color(0.01, 0.025, 0.07, 0.34), true)
@@ -2821,7 +2846,12 @@ func draw_battle() -> void:
 	# Rival, fase de IA, afinidades y ruptura.
 	var enemy_anchor := Vector2(730, 350) + impact_shake
 	draw_shadow(enemy_anchor - Vector2(0, 20), 58.0, 0.58)
-	if battle_context == "dungeon":
+	if str(enemy_data.get("id", "")) == "hollow_lion":
+		var boss_pulse := 1.0 + sin(world_time * 2.2) * 0.018
+		var boss_size := Vector2(285, 340) * boss_pulse
+		var boss_rect := Rect2(enemy_anchor - boss_size * Vector2(0.5, 0.92), boss_size)
+		draw_texture_rect(HOLLOW_CROWN_ART, boss_rect, false, Color(1.0, 0.62, 0.62) if enemy_animation == "hurt" else Color.WHITE)
+	elif battle_context == "dungeon":
 		var enemy_size := Vector2(300, 300) if str(enemy_data.get("rank", "normal")) == "boss" else Vector2(255, 285)
 		GameUI.grid_sprite(self, PHASE3_ENEMY_SHEET, int(enemy_data.get("sprite_index", 0)), enemy_anchor, enemy_size, enemy_animation, world_time, action_time, Color(1.0, 0.58, 0.58) if enemy_animation == "hurt" else Color.WHITE)
 	else:

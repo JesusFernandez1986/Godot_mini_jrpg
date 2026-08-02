@@ -38,9 +38,10 @@ func rebuild_party(party_members: Array) -> void:
 	clear_children(party_box)
 	for member in party_members:
 		var panel := PanelContainer.new()
-		panel.custom_minimum_size = Vector2(105, 63)
+		panel.custom_minimum_size = Vector2(105, 70)
 		var label := Label.new()
-		label.text = "%s%s\nPV %d/%d · PM %d/%d\n%s" % ["◆ " if bool(member.get("active", false)) else "", str(member.get("name", "—")).to_upper(), int(member.get("hp", 0)), int(member.get("max_hp", 1)), int(member.get("mp", 0)), int(member.get("max_mp", 1)), str(member.get("status", "SIN ESTADOS"))]
+		var focus := int(member.get("focus", 0))
+		label.text = "%s%s\nPV %d/%d · PM %d/%d\nIMP %s · %s\n%s" % ["◆ " if bool(member.get("active", false)) else "", str(member.get("name", "—")).to_upper(), int(member.get("hp", 0)), int(member.get("max_hp", 1)), int(member.get("mp", 0)), int(member.get("max_mp", 1)), "◆".repeat(focus) + "◇".repeat(CombatIdentitySystem.max_focus() - focus), str(member.get("identity", "—")), str(member.get("status", "SIN ESTADOS"))]
 		label.add_theme_font_size_override("font_size", 10)
 		label.add_theme_color_override("font_color", Color("ffe5a3") if bool(member.get("active", false)) else Color.WHITE)
 		panel.add_child(label)

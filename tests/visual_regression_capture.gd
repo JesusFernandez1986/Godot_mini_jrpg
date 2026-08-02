@@ -106,6 +106,13 @@ func capture_game_screens() -> void:
 	game.enemy_animation = "hurt"
 	game.start_battle_impact(84, "lightning", true)
 	await save_game_screen(viewport, game, "screen_battle")
+	for hero_index in game.party.size():
+		(game.party[hero_index] as Dictionary)["joined"] = true
+		(game.party[hero_index] as Dictionary)["active"] = hero_index < 4
+	game.start_phase3_battle("hollow_lion")
+	(game.party_battle["enemy"] as Dictionary)["hp"] = int(game.enemy_max_hp * 0.28)
+	game.sync_party_battle()
+	await save_game_screen(viewport, game, "screen_phase25_hollow_crown")
 	game.party_battle = {}
 	game.open_game_menu("world_map")
 	game.menu_tab = 5
@@ -117,6 +124,9 @@ func capture_game_screens() -> void:
 		game.advance_directed_scene()
 	game.dialogue_system.reveal_line()
 	await save_game_screen(viewport, game, "screen_dialogue")
+	game.complete_directed_scene_with_default_choices()
+	game.start_dialogue(game.hero_story_system.finale_dialogue_lines(), "world_map", "hero_finale", "hall_of_names")
+	await save_game_screen(viewport, game, "screen_phase24_hall_of_names")
 	game.game_state = "victory"
 	await save_game_screen(viewport, game, "screen_victory")
 	viewport.queue_free()

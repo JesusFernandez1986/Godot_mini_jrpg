@@ -112,6 +112,18 @@ El roster separa `joined` de `active`: pueden reclutarse ocho protagonistas, per
 
 `HD2DStage` compone un fondo en `CanvasLayer` negativo y un primer plano en capa positiva. `WorldPresentationSystem` proporciona perfiles para Valdoria, Catacumbas y Eira con gradación, rayos de luz, niebla, motas, viñeta, acento y oclusión. El escenario respeta la opción de movimiento reducido y queda desactivado fuera de esos tres espacios.
 
+## Arte final y dirección cinematográfica
+
+`ArtDirectionSystem` valida `data/art/phase22_manifest.json` y los recursos de `assets/phase22/`: existencia, resolución de producción, transparencia cuando corresponde y procedencia. El manifiesto es el registro obligatorio para incorporar nuevo arte final; los recursos temporales de generación no forman parte del proyecto.
+
+`CinematicDirector` consume `data/cinematics/phase24_shots.json`. Mantiene el encuadre actual y objetivo, interpolación, desplazamiento, bandas, título y subtítulo sin acoplarlos a una escena concreta. `CinematicOverlay` solo presenta esa instantánea mediante nodos `Control`; `main.gd` inicia/cierra secuencias y traduce el transform al lienzo. Con movimiento reducido los cambios se aplican sin interpolación.
+
+## Identidades tácticas
+
+`CombatIdentitySystem` carga las ocho identidades y las tres fases de la Corona Hueca desde `data/combat/phase25_identities.json`. `PartyBattleSystem` conserva el Ímpetu dentro del estado de batalla, lo valida en el rango 0–3 y lo consume al usar un arte. Los efectos secundarios —ruptura, retraso, Resonancia, recuperación, estados, cura grupal y bonificación contra jefes— se resuelven en el sistema de identidad, mientras la UI recibe únicamente nombres y valores preparados.
+
+La intención enemiga combina el título de fase con la próxima acción del patrón. La simulación masiva usa exactamente estos multiplicadores y efectos, por lo que cualquier ajuste de balance debe superar las mismas 2.500 batallas deterministas que la partida real.
+
 ## Ajustes
 
 `SettingsManager` persiste volumen maestro, música, efectos, velocidad del texto, resolución, modo de ventana y esquema de movimiento. `InputProfileSystem` conserva teclado y mando sobre acciones semánticas de `InputMap`; `main.gd` no consulta teclas físicas. Todos los valores se sanean antes de aplicarse.

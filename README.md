@@ -167,6 +167,13 @@ La opción **Demo vertical** del título inicia una ruta autocontenida por Valdo
 - Expresiones dirigidas, consecuencias anticipadas en las elecciones y vínculos persistentes afectados por las respuestas.
 - Seis topologías de mazmorra diferenciadas, paletas propias y patrullas visibles y evitables en sus 18 plantas.
 
+## Fases 22, 24 y 25 · Identidad de producción
+
+- **Fase 22 · Arte definitivo:** la Corona Hueca dispone de una silueta de jefe original y el Salón de los Nombres de un fondo cinematográfico 16:9. `data/art/phase22_manifest.json` documenta función, resolución mínima, transparencia, procedencia y licencia de ambos recursos.
+- **Fase 24 · Dirección cinematográfica:** `CinematicDirector` interpreta primeros planos, planos generales, paneos, contrapicados y presentaciones de jefe desde `data/cinematics/phase24_shots.json`. Las escenas dirigidas y los finales usan bandas cinematográficas, tarjetas de capítulo y transiciones compatibles con movimiento reducido.
+- **Fase 25 · Identidad táctica:** cada uno de los ocho protagonistas tiene un rasgo de arte exclusivo y acumula hasta tres puntos de **Ímpetu** antes de gastarlos para potenciar su arte. La Corona Hueca presenta tres fases con nombres, intención visible y presión creciente.
+- El jefe final y el final común reutilizan el nuevo arte en combate y en el Salón de los Nombres; no dependen de una variante genérica del atlas de enemigos.
+
 ## Base técnica
 
 - Tres ranuras manuales y autoguardado v16 con checksum, backup y migraciones desde v1.
@@ -179,7 +186,7 @@ La opción **Demo vertical** del título inicia una ruta autocontenida por Valdo
 - Director de audio con buses `Music`, `Ambience`, `SFX` y `UI`, transiciones contextuales y señales para interfaz, interacción, impacto, curación y guardado.
 - Perfil de entrada centralizado en `InputMap` para teclado y mando, sin teclas físicas dispersas en el orquestador.
 - Presupuesto medible de 60 FPS, P95 de 20 ms, nodos, draw calls, objetos y memoria de texturas; smoke test de 960×540 a 1920×1080.
-- Suite automatizada unitaria y de integración.
+- Suite automatizada unitaria, de integración, balance, resolución y regresión visual.
 - Escalado 16:9 explícito para que el juego llene tanto una ventana normal como el modo incrustado del editor.
 
 ## Pruebas
@@ -188,7 +195,7 @@ La opción **Demo vertical** del título inicia una ruta autocontenida por Valdo
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . --script res://tests/test_runner.gd
 ```
 
-La suite ejecuta más de 1.180 comprobaciones unitarias y de integración sobre datos, misiones, 18 plantas de mazmorra, ocho capacidades de exploración, 32 capítulos personales, bestiario, mercados, facciones, arena, logros, audio, entrada de mando, presupuestos de rendimiento, HUD, todas las animaciones, rutas, horarios, clima, presentación de combate, decisiones, navegación A*, guardado/carga v1–v16, Nueva Partida + y campaña completa. Además simula 2.500 batallas deterministas, 1.200 combinaciones de equipo y 6.000 pasos de estrés sobre el mapa mundial.
+La suite ejecuta más de 1.210 comprobaciones unitarias y de integración sobre datos, misiones, 18 plantas de mazmorra, ocho capacidades de exploración, 32 capítulos personales, bestiario, mercados, facciones, arena, logros, arte final, dirección cinematográfica, identidades tácticas, audio, entrada de mando, presupuestos de rendimiento, HUD, todas las animaciones, rutas, horarios, clima, presentación de combate, decisiones, navegación A*, guardado/carga v1–v16, Nueva Partida + y campaña completa. Además simula 2.500 batallas deterministas, 1.200 combinaciones de equipo y 6.000 pasos de estrés sobre el mapa mundial.
 
 La revisión visual completa usa `tests/visual_regression_capture.gd`. `tests/resolution_smoke_test.gd` genera capturas reales en las cuatro resoluciones compatibles y verifica que se conserva la base 16:9.
 

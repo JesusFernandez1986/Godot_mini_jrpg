@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "direction": {
+    "logical_resolution": "960x540",
+    "perspective": "HD-2D, personajes en tres cuartos sobre escenarios con profundidad",
+    "palette": ["midnight_navy", "crystal_cyan", "antique_gold", "muted_ivory"],
+    "filtering": "nearest for sprites, linear for cinematic backgrounds"
+  },
+  "assets": [
+    {
+      "id": "hollow_crown",
+      "path": "res://assets/phase22/hollow_crown.png",
+      "role": "final_boss_sprite",
+      "license": "Original project asset generated with OpenAI image generation on 2026-08-02",
+      "prompt_summary": "Empty royal crown fused with a spectral lion sovereign; original gold, obsidian and cyan pixel-art design",
+      "requires_alpha": true,
+      "min_width": 900,
+      "min_height": 1100
+    },
+    {
+      "id": "hall_of_names",
+      "path": "res://assets/phase22/hall_of_names.png",
+      "role": "cinematic_background",
+      "license": "Original project asset generated with OpenAI image generation on 2026-08-02",
+      "prompt_summary": "Ruined circular throne chamber in a blue void with a fractured floating crown and eight converging paths",
+      "requires_alpha": false,
+      "min_width": 1500,
+      "min_height": 800
+    }
+  ]
+}

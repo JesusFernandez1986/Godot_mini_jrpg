@@ -10,13 +10,16 @@ const ACTION_IDS := ["attack", "art", "heal", "defend", "item", "switch", "combo
 static func create_battle(party: Array, enemy: Dictionary) -> Dictionary:
 	var allies: Array = []
 	var ally_statuses: Dictionary = {}
+	var focus: Dictionary = {}
 	for member in party:
 		if member is Dictionary and bool(member.get("joined", false)) and bool(member.get("active", true)) and allies.size() < MAX_ACTIVE_ALLIES:
 			allies.append(member)
 			ally_statuses[str(member.get("id", allies.size()))] = {}
+			focus[str(member.get("id", allies.size()))] = 0
 	if allies.is_empty() and not party.is_empty() and party[0] is Dictionary:
 		allies.append(party[0])
 		ally_statuses[str((party[0] as Dictionary).get("id", "aren"))] = {}
+		focus[str((party[0] as Dictionary).get("id", "aren"))] = 0
 	var runtime_enemy := enemy.duplicate(true)
 	runtime_enemy["hp"] = int(runtime_enemy.get("hp", runtime_enemy.get("max_hp", 1)))
 	runtime_enemy["max_hp"] = maxi(1, int(runtime_enemy.get("max_hp", runtime_enemy["hp"])))
@@ -24,6 +27,7 @@ static func create_battle(party: Array, enemy: Dictionary) -> Dictionary:
 	var state := {
 		"allies": allies,
 		"ally_statuses": ally_statuses,
+		"focus": focus,
 		"enemy": runtime_enemy,
 		"enemy_statuses": {},
 		"queue": [],
@@ -143,6 +147,9 @@ static func resolve_until_player(state: Dictionary, rng: RandomNumberGenerator) 
 			if bool(ally_tick["skip"]): messages.append("%s pierde su turno." % str(ally["name"]))
 			advance_actor(state)
 			continue
+		var focus_by_hero := state.get("focus", {}) as Dictionary
+		var ally_id := str(ally.get("id", ""))
+		focus_by_hero[ally_id] = mini(CombatIdentitySystem.max_focus(), int(focus_by_hero.get(ally_id, 0)) + 1)
 		state["turn_prepared"] = true
 		break
 	append_log(state, messages)
@@ -204,18 +211,28 @@ static func player_art(state: Dictionary, actor: Dictionary, rng: RandomNumberGe
 	var cost := clampi(int(skill.get("cost", 3)), 0, 99)
 	if int(actor.get("mp", 0)) < cost:
 		return {"success": false, "message": "%s no tiene PM suficientes." % actor["name"]}
+	var focus_by_hero := state.get("focus", {}) as Dictionary
+	var focus_spent := int(focus_by_hero.get(str(actor["id"]), 0))
+	var identity := CombatIdentitySystem.hero(str(actor["id"]))
 	actor["mp"] = int(actor["mp"]) - cost
 	if str(skill.get("kind", "damage")) == "heal":
-		var amount := mini(int(actor["max_hp"]) - int(actor["hp"]), int(skill.get("power", 20)) + int(actor.get("magic", 1)))
+		var healing_power := int(round((int(skill.get("power", 20)) + int(actor.get("magic", 1))) * (1.0 + focus_spent * 0.15)))
+		var amount := mini(int(actor["max_hp"]) - int(actor["hp"]), healing_power)
 		actor["hp"] = int(actor["hp"]) + amount
 		apply_status((state["ally_statuses"] as Dictionary)[str(actor["id"])] as Dictionary, "regeneration", 3, maxi(2, int(actor["max_hp"]) / 15))
-		return {"success":true, "message":"%s usa %s: +%d PV y Regeneración." % [actor["name"], skill["name"], amount], "healing":amount, "animation":"heal"}
-	var hit := deal_enemy_damage(state, actor, int(skill["power"]), "magic", str(skill["element"]), rng)
+		var healing_rider := CombatIdentitySystem.apply_rider(state, actor, focus_spent, false)
+		focus_by_hero[str(actor["id"])] = 0
+		return {"success":true, "message":"%s usa %s: +%d PV y Regeneración. %s" % [actor["name"], skill["name"], amount, healing_rider], "healing":amount, "animation":"heal", "focus_spent":focus_spent, "identity":identity.get("name", "")}
+	var boosted_power := int(round(int(skill["power"]) * CombatIdentitySystem.power_multiplier(str(actor["id"]), focus_spent, state["enemy"] as Dictionary)))
+	var hit := deal_enemy_damage(state, actor, boosted_power, "magic", str(skill["element"]), rng)
 	if int(hit["damage"]) > 0 and not str(skill["status"]).is_empty():
 		apply_status(state["enemy_statuses"] as Dictionary, str(skill["status"]), 2)
+	var rider_message := CombatIdentitySystem.apply_rider(state, actor, focus_spent, bool(hit["weak"]))
+	focus_by_hero[str(actor["id"])] = 0
 	var message := "%s usa %s: %d de daño %s." % [actor["name"], skill["name"], hit["damage"], str(skill["element"]).to_upper()]
 	if bool(hit["weak"]): message += " ¡Debilidad explotada!"
-	return {"success": true, "message": message, "damage": hit["damage"], "weak": hit["weak"], "element": str(skill["element"]), "animation": "special"}
+	if not rider_message.is_empty(): message += " " + rider_message
+	return {"success": true, "message": message, "damage": hit["damage"], "weak": hit["weak"], "element": str(skill["element"]), "animation": "special", "focus_spent":focus_spent, "identity":identity.get("name", "")}
 
 static func player_heal(state: Dictionary, actor: Dictionary, args: Dictionary) -> Dictionary:
 	var statuses: Dictionary = (state["ally_statuses"] as Dictionary).get(str(actor["id"]), {})
@@ -350,6 +367,7 @@ static func enemy_turn(state: Dictionary, rng: RandomNumberGenerator) -> String:
 	if not miss:
 		var raw := 5.0 + float(enemy.get("attack", 1)) * (0.75 if damage_kind == "physical" else 0.6) - float(target.get("defense", 0)) * 0.32
 		var multiplier := affinity_multiplier(target, element)
+		multiplier *= CombatIdentitySystem.enemy_damage_multiplier(str(enemy.get("id", "")), int(state.get("enemy_phase", 1)))
 		if "unyielding" in (target.get("passives", []) as Array) and int(target["hp"]) * 3 <= int(target["max_hp"]): multiplier *= 0.75
 		damage = maxi(1, int(round(raw * rng.randf_range(0.9, 1.1) * multiplier)))
 		var defending: Dictionary = state["defending"]
@@ -386,6 +404,13 @@ static func predicted_enemy_action(state: Dictionary) -> String:
 	var cursors: Dictionary = state["ai_cursor"]
 	var cursor := int(cursors.get(phase, 0))
 	return str(pattern[cursor % pattern.size()])
+
+static func predicted_enemy_intent(state: Dictionary) -> String:
+	var enemy: Dictionary = state["enemy"]
+	var phase := int(state.get("enemy_phase", 1))
+	var action := predicted_enemy_action(state).capitalize()
+	var title := CombatIdentitySystem.phase_title(str(enemy.get("id", "")), phase)
+	return "%s · %s" % [title, action]
 
 static func tick_statuses(combatant: Dictionary, statuses: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
 	var messages: Array[String] = []
@@ -458,13 +483,15 @@ static func append_log(state: Dictionary, messages: Array[String]) -> void:
 
 static func validate_state(state: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
-	for key in ["allies", "enemy", "queue", "resonance", "shield", "outcome"]:
+	for key in ["allies", "enemy", "queue", "resonance", "shield", "focus", "outcome"]:
 		if not state.has(key): errors.append("Combate sin campo %s" % key)
 	if not errors.is_empty(): return errors
 	if int(state["resonance"]) < 0 or int(state["resonance"]) > MAX_RESONANCE: errors.append("Resonancia fuera de rango")
 	if int(state["shield"]) < 0 or int(state["shield"]) > int(state["shield_max"]): errors.append("Escudo de ruptura fuera de rango")
 	for member in state["allies"] as Array:
 		if int(member["hp"]) < 0 or int(member["hp"]) > int(member["max_hp"]): errors.append("PV inválidos en %s" % member["name"])
+		var member_focus := int((state["focus"] as Dictionary).get(str(member.get("id", "")), -1))
+		if member_focus < 0 or member_focus > CombatIdentitySystem.max_focus(): errors.append("Ímpetu fuera de rango en %s" % member["name"])
 	var enemy: Dictionary = state["enemy"]
 	if int(enemy["hp"]) < 0 or int(enemy["hp"]) > int(enemy["max_hp"]): errors.append("PV enemigos inválidos")
 	return errors

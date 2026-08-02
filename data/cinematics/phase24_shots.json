@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "profiles": {
+    "wide": {"zoom": 1.0, "offset": [0, 0], "letterbox": 28, "label": "PLANO GENERAL"},
+    "close_up": {"zoom": 1.13, "offset": [0, 10], "letterbox": 38, "label": "PRIMER PLANO"},
+    "pan_left": {"zoom": 1.06, "offset": [-24, 0], "letterbox": 32, "label": "TRAVELLING IZQUIERDA"},
+    "pan_right": {"zoom": 1.06, "offset": [24, 0], "letterbox": 32, "label": "TRAVELLING DERECHA"},
+    "pan_up": {"zoom": 1.08, "offset": [0, -22], "letterbox": 36, "label": "CONTRAPICADO"},
+    "ominous": {"zoom": 1.1, "offset": [0, -12], "letterbox": 42, "label": "PRESAGIO"},
+    "finale": {"zoom": 1.04, "offset": [0, -8], "letterbox": 44, "label": "CONVERGENCIA"},
+    "boss_intro": {"zoom": 1.16, "offset": [72, -18], "letterbox": 44, "label": "AMENAZA"}
+  },
+  "sequences": {
+    "common_finale": {"title": "LA CORONA DE TODOS", "subtitle": "Ocho caminos. Una memoria compartida.", "opening": "finale"},
+    "finale": {"title": "EPÍLOGO", "subtitle": "Un juramento compartido", "opening": "finale"},
+    "vertical_slice_intro": {"title": "CAPÍTULO I", "subtitle": "La fuente del león", "opening": "wide"},
+    "battle_hollow_lion": {"title": "LA CORONA HUECA", "subtitle": "El nombre que devora los juramentos", "opening": "boss_intro"},
+    "council_of_memory": {"title": "EL CONSEJO DE LA MEMORIA", "subtitle": "Toda verdad exige una voz", "opening": "wide"},
+    "directed_scene": {"title": "CRÓNICA DE ERENDOR", "subtitle": "Una conversación recordada", "opening": "wide"}
+  }
+}

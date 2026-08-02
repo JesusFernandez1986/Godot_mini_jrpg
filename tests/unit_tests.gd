@@ -26,6 +26,9 @@ static func run(suite: TestSuite) -> void:
 	test_phase15_completion(suite)
 	test_phase3_quests(suite)
 	test_character_animation(suite)
+	test_phase22_art_direction(suite)
+	test_phase24_cinematic_direction(suite)
+	test_phase25_combat_identities(suite)
 	test_camera(suite)
 	test_sanctuary_movement(suite)
 	test_settings(suite)
@@ -877,6 +880,70 @@ static func test_character_animation(suite: TestSuite) -> void:
 	suite.equal(str(patrol_step.get("kind", "")), "encounter", "Las patrullas visibles activan combate al alcanzarlas")
 	DungeonExplorationSystem.resolve_encounter(patrol_state, str(patrol_step.get("encounter_id", "")))
 	suite.check(DungeonExplorationSystem.patrol_at(patrol_state, 0, DungeonExplorationSystem.PATROL_CELLS[0]).is_empty(), "Una patrulla derrotada desaparece de la mazmorra")
+
+static func test_phase22_art_direction(suite: TestSuite) -> void:
+	suite.section("Fase 22 · Arte definitivo")
+	suite.check(ArtDirectionSystem.validate().is_empty(), "El arte final tiene resolución, transparencia y procedencia documentadas")
+	var boss := ArtDirectionSystem.asset("hollow_crown")
+	var hall := ArtDirectionSystem.asset("hall_of_names")
+	suite.equal(str(boss.get("role", "")), "final_boss_sprite", "La Corona Hueca tiene una silueta final propia")
+	suite.equal(str(hall.get("role", "")), "cinematic_background", "El final dispone de un escenario cinematográfico original")
+	var boss_image := Image.load_from_file(ProjectSettings.globalize_path(str(boss.get("path", ""))))
+	suite.check(boss_image != null and boss_image.get_pixel(0, 0).a < 0.05, "Las esquinas del jefe son transparentes y no conservan chroma")
+
+static func test_phase24_cinematic_direction(suite: TestSuite) -> void:
+	suite.section("Fase 24 · Dirección cinematográfica")
+	suite.check(CinematicDirector.validate().is_empty(), "Todos los encuadres y secuencias cinematográficas son válidos")
+	var director := CinematicDirector.new()
+	director.begin_sequence("battle_hollow_lion")
+	suite.check(director.active and director.title == "LA CORONA HUECA", "La presentación del jefe activa título y bandas cinematográficas")
+	director.cue({"camera":"close_up"})
+	director.update(0.5)
+	suite.check(director.zoom > 1.0 and director.target_letterbox >= 38.0, "Un primer plano mueve y acerca la cámara de forma dirigida")
+	var transform := director.canvas_transform()
+	suite.check(transform.has("origin") and transform.has("zoom"), "El director expone un transform desacoplado del dibujo de escena")
+	director.end_sequence()
+	suite.check(not director.active and director.zoom == 1.0, "Cerrar la secuencia restaura el encuadre de juego")
+	var accessible := CinematicDirector.new()
+	accessible.begin_sequence("common_finale", true)
+	accessible.cue({"camera":"pan_up"})
+	suite.equal(accessible.zoom, accessible.target_zoom, "Movimiento reducido evita interpolaciones innecesarias")
+
+static func test_phase25_combat_identities(suite: TestSuite) -> void:
+	suite.section("Fase 25 · Identidades tácticas y jefe final")
+	suite.check(CombatIdentitySystem.validate().is_empty(), "Los ocho protagonistas tienen identidades mecánicas únicas")
+	var names: Array[String] = []
+	for hero_id in CombatIdentitySystem.HERO_IDS:
+		var profile := CombatIdentitySystem.hero(hero_id)
+		suite.check(not str(profile.get("description", "")).is_empty(), "%s explica su aportación táctica" % hero_id.capitalize())
+		names.append(str(profile.get("name", "")))
+	var unique_names := names.duplicate()
+	unique_names.sort()
+	for index in range(unique_names.size() - 1, 0, -1):
+		if unique_names[index] == unique_names[index - 1]: unique_names.remove_at(index)
+	suite.equal(unique_names.size(), 8, "Las ocho identidades tienen nombre propio")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 250025
+	var battle := PartyBattleSystem.create_battle(full_test_party(), GameDatabase.enemy_by_id("hollow_lion"))
+	PartyBattleSystem.resolve_until_player(battle, rng)
+	var ready_actor := PartyBattleSystem.current_ally(battle)
+	suite.equal(int((battle["focus"] as Dictionary)[str(ready_actor["id"])]), 1, "Preparar un turno concede un punto de Ímpetu")
+	var aren := (battle["allies"] as Array)[0] as Dictionary
+	(battle["focus"] as Dictionary)["aren"] = 3
+	var art_result := PartyBattleSystem.player_art(battle, aren, rng)
+	suite.equal(int(art_result.get("focus_spent", -1)), 3, "Un arte consume hasta tres puntos de Ímpetu")
+	suite.equal(int((battle["focus"] as Dictionary)["aren"]), 0, "El Ímpetu vuelve a cero tras ejecutar el arte")
+	suite.equal(str(art_result.get("identity", "")), "Juramento del León", "El resultado identifica la mecánica del protagonista")
+	var shatter_state := PartyBattleSystem.create_battle(full_test_party(), GameDatabase.enemy_by_id("stone_gargoyle"))
+	var brom := (shatter_state["allies"] as Array)[2] as Dictionary
+	var shield_before := int(shatter_state["shield"])
+	CombatIdentitySystem.apply_rider(shatter_state, brom, 2, false)
+	suite.equal(int(shatter_state["shield"]), maxi(0, shield_before - 2), "Brom distingue su arte con una ruptura doble")
+	(shatter_state["enemy"] as Dictionary)["id"] = "hollow_lion"
+	shatter_state["enemy_phase"] = 3
+	suite.check("La Corona de Nadie" in PartyBattleSystem.predicted_enemy_intent(shatter_state), "La tercera fase del jefe comunica su identidad y próxima acción")
+	suite.check(CombatIdentitySystem.enemy_damage_multiplier("hollow_lion", 3) > CombatIdentitySystem.enemy_damage_multiplier("hollow_lion", 1), "La Corona Hueca escala su presión en tres fases")
+	suite.check(PartyBattleSystem.validate_state(battle).is_empty(), "Ímpetu y artes preservan las invariantes del combate")
 
 static func test_camera(suite: TestSuite) -> void:
 	suite.section("Cámara y profundidad")

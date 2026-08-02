@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "max_focus": 3,
+  "heroes": {
+    "aren": {"name": "Juramento del León", "rider": "oath_break", "description": "Su arte erosiona un punto adicional de ruptura.", "color": "ffe195"},
+    "lyra": {"name": "Compás Astral", "rider": "delay", "description": "Su arte retrasa la próxima acción enemiga.", "color": "9bdcff"},
+    "brom": {"name": "Yunque Rúnico", "rider": "shatter", "description": "Su arte erosiona dos puntos adicionales de ruptura.", "color": "e4b77e"},
+    "seris": {"name": "Caza de Ecos", "rider": "resonance", "description": "Explotar debilidad genera Resonancia adicional.", "color": "a9efcf"},
+    "naia": {"name": "Marea de Retorno", "rider": "refund", "description": "Recupera PM según el Ímpetu consumido.", "color": "7eddf2"},
+    "kael": {"name": "Testigo del Velo", "rider": "expose", "description": "Su arte prolonga Ceguera sobre el rival.", "color": "c6a8ff"},
+    "mira": {"name": "Coro Compartido", "rider": "chorus", "description": "Su arte restaura también al resto del grupo.", "color": "ffd4ee"},
+    "orin": {"name": "Derribo de Colosos", "rider": "colossus", "description": "Sus artes causan más daño a jefes.", "color": "ffca84"}
+  },
+  "bosses": {
+    "hollow_lion": {
+      "1": {"title": "El Trono Vacío", "damage_multiplier": 1.0},
+      "2": {"title": "La Memoria Hambrienta", "damage_multiplier": 1.12},
+      "3": {"title": "La Corona de Nadie", "damage_multiplier": 1.22}
+    }
+  }
+}
