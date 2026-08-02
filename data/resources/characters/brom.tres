@@ -17,5 +17,6 @@ speed = 5
 sprite_index = 2
 element = "earth"
 weapon = "hammer"
+exploration_ability = "break"
 weaknesses = Array[String](["wind"])
 resistances = Array[String](["earth"])

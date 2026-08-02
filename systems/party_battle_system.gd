@@ -11,7 +11,7 @@ static func create_battle(party: Array, enemy: Dictionary) -> Dictionary:
 	var allies: Array = []
 	var ally_statuses: Dictionary = {}
 	for member in party:
-		if member is Dictionary and bool(member.get("joined", false)) and allies.size() < MAX_ACTIVE_ALLIES:
+		if member is Dictionary and bool(member.get("joined", false)) and bool(member.get("active", true)) and allies.size() < MAX_ACTIVE_ALLIES:
 			allies.append(member)
 			ally_statuses[str(member.get("id", allies.size()))] = {}
 	if allies.is_empty() and not party.is_empty() and party[0] is Dictionary:
@@ -193,22 +193,29 @@ static func player_attack(state: Dictionary, actor: Dictionary, rng: RandomNumbe
 	var message := "%s ataca: %d de daño." % [actor["name"], hit["damage"]]
 	if bool(hit["miss"]): message = "%s falla el ataque." % actor["name"]
 	elif bool(hit["weak"]): message += " ¡Debilidad! Resonancia +1."
-	return {"success": true, "message": message, "damage": hit["damage"], "weak": hit["weak"], "animation": "attack"}
+	return {"success": true, "message": message, "damage": hit["damage"], "weak": hit["weak"], "element": weapon, "animation": "attack"}
 
 static func player_art(state: Dictionary, actor: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
 	var statuses: Dictionary = (state["ally_statuses"] as Dictionary).get(str(actor["id"]), {})
 	if statuses.has("silence"):
 		return {"success": false, "message": "%s está en silencio." % actor["name"]}
-	if int(actor.get("mp", 0)) < 3:
+	var skill_id := str(actor.get("selected_skill", ""))
+	var skill := AdvancementSystem.SKILLS.get(skill_id, skill_for_member(str(actor.get("id", "aren")))) as Dictionary
+	var cost := clampi(int(skill.get("cost", 3)), 0, 99)
+	if int(actor.get("mp", 0)) < cost:
 		return {"success": false, "message": "%s no tiene PM suficientes." % actor["name"]}
-	actor["mp"] = int(actor["mp"]) - 3
-	var skill := skill_for_member(str(actor.get("id", "aren")))
+	actor["mp"] = int(actor["mp"]) - cost
+	if str(skill.get("kind", "damage")) == "heal":
+		var amount := mini(int(actor["max_hp"]) - int(actor["hp"]), int(skill.get("power", 20)) + int(actor.get("magic", 1)))
+		actor["hp"] = int(actor["hp"]) + amount
+		apply_status((state["ally_statuses"] as Dictionary)[str(actor["id"])] as Dictionary, "regeneration", 3, maxi(2, int(actor["max_hp"]) / 15))
+		return {"success":true, "message":"%s usa %s: +%d PV y Regeneración." % [actor["name"], skill["name"], amount], "healing":amount, "animation":"heal"}
 	var hit := deal_enemy_damage(state, actor, int(skill["power"]), "magic", str(skill["element"]), rng)
 	if int(hit["damage"]) > 0 and not str(skill["status"]).is_empty():
 		apply_status(state["enemy_statuses"] as Dictionary, str(skill["status"]), 2)
 	var message := "%s usa %s: %d de daño %s." % [actor["name"], skill["name"], hit["damage"], str(skill["element"]).to_upper()]
 	if bool(hit["weak"]): message += " ¡Debilidad explotada!"
-	return {"success": true, "message": message, "damage": hit["damage"], "weak": hit["weak"], "animation": "special"}
+	return {"success": true, "message": message, "damage": hit["damage"], "weak": hit["weak"], "element": str(skill["element"]), "animation": "special"}
 
 static func player_heal(state: Dictionary, actor: Dictionary, args: Dictionary) -> Dictionary:
 	var statuses: Dictionary = (state["ally_statuses"] as Dictionary).get(str(actor["id"]), {})
@@ -219,7 +226,9 @@ static func player_heal(state: Dictionary, actor: Dictionary, args: Dictionary) 
 	var target: Dictionary = allies[target_index]
 	if int(target["hp"]) >= int(target["max_hp"]): return {"success": false, "message": "%s ya tiene todos sus PV." % target["name"]}
 	actor["mp"] = int(actor["mp"]) - 2
-	var amount := mini(int(target["max_hp"]) - int(target["hp"]), 14 + int(actor.get("magic", 1)))
+	var healing_power := 14 + int(actor.get("magic", 1))
+	if "field_medic" in (actor.get("passives", []) as Array): healing_power = int(round(healing_power * 1.25))
+	var amount := mini(int(target["max_hp"]) - int(target["hp"]), healing_power)
 	target["hp"] = int(target["hp"]) + amount
 	return {"success": true, "message": "%s cura a %s: +%d PV." % [actor["name"], target["name"], amount], "healing": amount, "animation": "heal"}
 
@@ -266,7 +275,7 @@ static func player_combo(state: Dictionary, actor: Dictionary, rng: RandomNumber
 	var proxy := {"attack": combined_attack / allies.size(), "magic": combined_magic / allies.size()}
 	var hit := deal_enemy_damage(state, proxy, 22 + allies.size() * 4, "magic", "light", rng)
 	apply_status(state["enemy_statuses"] as Dictionary, "fear", 1)
-	return {"success": true, "message": "¡Convergencia del Cristal! El grupo causa %d de daño combinado." % hit["damage"], "damage": hit["damage"], "animation": "special"}
+	return {"success": true, "message": "¡Convergencia del Cristal! El grupo causa %d de daño combinado." % hit["damage"], "damage": hit["damage"], "element": "light", "animation": "special"}
 
 static func player_flee(state: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
 	var enemy: Dictionary = state["enemy"]
@@ -301,7 +310,12 @@ static func deal_enemy_damage(state: Dictionary, attacker: Dictionary, power: in
 		else: raw += float(attacker.get("magic", 1)) * 1.55 - defense * 0.34
 		var variance := rng.randf_range(0.92, 1.08)
 		var multiplier := 1.5 if weak else 0.55 if resistant else 1.0
+		var passives: Array = attacker.get("passives", [])
+		if weak and "weakness_hunter" in passives: multiplier *= 1.12
+		if damage_kind == "magic" and "elemental_focus" in passives: multiplier *= 1.1
+		if "oathkeeper" in passives: multiplier *= 1.08
 		damage = maxi(1, int(round(raw * variance * multiplier)))
+		damage = mini(damage, 9999)
 		enemy["hp"] = maxi(0, int(enemy["hp"]) - damage)
 		if weak:
 			state["resonance"] = mini(MAX_RESONANCE, int(state["resonance"]) + 1)
@@ -336,6 +350,7 @@ static func enemy_turn(state: Dictionary, rng: RandomNumberGenerator) -> String:
 	if not miss:
 		var raw := 5.0 + float(enemy.get("attack", 1)) * (0.75 if damage_kind == "physical" else 0.6) - float(target.get("defense", 0)) * 0.32
 		var multiplier := affinity_multiplier(target, element)
+		if "unyielding" in (target.get("passives", []) as Array) and int(target["hp"]) * 3 <= int(target["max_hp"]): multiplier *= 0.75
 		damage = maxi(1, int(round(raw * rng.randf_range(0.9, 1.1) * multiplier)))
 		var defending: Dictionary = state["defending"]
 		if bool(defending.get(str(target["id"]), false)):

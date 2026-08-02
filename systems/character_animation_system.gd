@@ -9,7 +9,7 @@ const STATES := [
 ]
 const CHARACTER_COLUMNS := [3, 2, 2, 2]
 const CHARACTER_BLOCK_WIDTH := 384.0
-const ROW_HEIGHT := 128.0
+const ROW_HEIGHT := 160.0
 const FRAME_DURATIONS := {
 	"idle": 0.55,
 	"walk": 0.16,
@@ -27,6 +27,17 @@ const FRAME_DURATIONS := {
 	"rest": 0.62,
 	"celebrate": 0.13,
 	"travel": 0.10
+}
+const ONE_SHOT_DURATIONS := {
+	"attack": 0.65,
+	"special": 0.90,
+	"hurt": 0.55,
+	"fall": 0.80,
+	"open_chest": 0.65,
+	"mechanism": 0.65,
+	"use_item": 0.70,
+	"heal": 0.85,
+	"celebrate": 0.85
 }
 
 static func validate_state(state: String) -> bool:
@@ -57,7 +68,7 @@ static func direction_index(direction: String) -> int:
 	return index if index >= 0 else 0
 
 static func frame_count(character_index: int) -> int:
-	return CHARACTER_COLUMNS[clampi(character_index, 0, CHARACTER_COLUMNS.size() - 1)]
+	return CHARACTER_COLUMNS[posmod(character_index, CHARACTER_COLUMNS.size())]
 
 static func frame_sequence(state: String, available_frames: int) -> Array:
 	var last := maxi(0, available_frames - 1)
@@ -84,6 +95,9 @@ static func frame_sequence(state: String, available_frames: int) -> Array:
 static func sequence_index(state: String, elapsed: float, available_frames: int) -> int:
 	var safe_state := state if validate_state(state) else "idle"
 	var sequence := frame_sequence(safe_state, available_frames)
+	if safe_state in ONE_SHOT_DURATIONS:
+		var total_duration := float(ONE_SHOT_DURATIONS[safe_state])
+		return clampi(int(floor(maxf(0.0, elapsed) / total_duration * sequence.size())), 0, sequence.size() - 1)
 	var duration := float(FRAME_DURATIONS.get(safe_state, 0.16))
 	return int(floor(maxf(0.0, elapsed) / duration)) % sequence.size()
 
@@ -93,7 +107,7 @@ static func frame_index(state: String, elapsed: float, character_index: int) -> 
 	return sequence[sequence_index(state, elapsed, count)]
 
 static func atlas_region(character_index: int, direction: String, state: String, elapsed: float) -> Rect2:
-	var safe_character := clampi(character_index, 0, CHARACTER_COLUMNS.size() - 1)
+	var safe_character := posmod(character_index, CHARACTER_COLUMNS.size())
 	var columns := frame_count(safe_character)
 	var cell_width := CHARACTER_BLOCK_WIDTH / float(columns)
 	var column := frame_index(state, elapsed, safe_character)

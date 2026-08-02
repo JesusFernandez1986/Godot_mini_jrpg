@@ -148,21 +148,207 @@ static func run(suite: TestSuite, tree: SceneTree) -> void:
 	await frame(tree, scene)
 	suite.equal(str((scene.phase3_state["main"] as Dictionary)["status"]), "completed", "La misión principal concluye")
 	suite.check(bool((scene.phase3_state["flags"] as Dictionary)["closing_seen"]), "La escena final queda registrada")
+
+	suite.section("Integración de Fase 5 · Equipo y progresión")
+	suite.check(EquipmentSystem.validate(scene.equipment_state).is_empty(), "El botín de la vertical slice mantiene un inventario de equipo válido")
+	suite.check((scene.equipment_state["owned"] as Dictionary).has("lion_mail") and (scene.equipment_state["owned"] as Dictionary).has("oath_brooch"), "Miniboss y jefe conceden botín de rareza especial")
+	var lion_quantity_before := int((scene.equipment_state["owned"] as Dictionary)["lion_mail"]["quantity"])
+	scene.open_game_menu("valdoria_explore")
+	scene.menu_tab = 1
+	scene.menu_index = 4
+	scene.workshop_recipe_index = 0
+	scene.activate_menu_item()
+	suite.equal(int((scene.equipment_state["owned"] as Dictionary)["lion_mail"]["quantity"]), lion_quantity_before + 1, "El taller del menú fabrica una Cota del León")
+	scene.menu_tab = 2
+	scene.menu_index = 1
+	scene.activate_menu_item()
+	suite.check(str(AdvancementSystem.member_state(scene.advancement_state, "aren")["secondary_job"]) != "none", "El menú asigna un trabajo secundario con los PT ganados")
+	suite.check(EquipmentSystem.validate(scene.equipment_state).is_empty() and AdvancementSystem.validate(scene.advancement_state).is_empty(), "Equipo y progresión siguen siendo válidos tras operar desde la interfaz")
+
+	suite.section("Integración de Fase 6 · Decisiones persistentes")
+	suite.equal(scene.active_directed_scene, "council_of_memory", "Completar la Fase 3 inicia el Consejo Abierto")
+	suite.check(not scene.dialogue_system.current_metadata().is_empty(), "La escena dirigida aporta expresión, cámara y movimiento")
+	suite.equal(scene.directed_music_cue, "council", "La dirección narrativa activa su señal musical")
+	scene.advance_directed_scene()
+	scene.advance_directed_scene()
+	suite.equal(scene.narrative_system.current_choices(scene.narrative_state).size(), 2, "El consejo ofrece dos decisiones jugables")
+	var mid_choice_payload: Dictionary = scene.save_payload()
+	scene.narrative_state["variables"]["council_path"] = "corrupted-test-value"
+	scene.apply_loaded_data(mid_choice_payload)
+	suite.equal(scene.active_directed_scene, "council_of_memory", "Cargar reanuda una escena a mitad de decisión")
+	suite.equal(scene.narrative_system.current_choices(scene.narrative_state).size(), 2, "Las opciones siguen disponibles tras cargar")
+	scene.advance_directed_scene(1)
+	scene.complete_directed_scene_with_default_choices()
+	suite.equal(str((scene.narrative_state["variables"] as Dictionary)["council_path"]), "mercy", "La decisión de clemencia persiste en variables narrativas")
+	suite.equal(str((scene.narrative_state["quests"] as Dictionary)["main_open_council"]["status"]), "completed", "La misión principal ramificada puede completarse")
+	suite.check("event_mercy_path" in (scene.narrative_state["codex_unlocked"] as Array), "La decisión desbloquea su entrada de códice")
+	suite.check(scene.journal_menu_entries().any(func(entry: Dictionary): return str(entry.get("entry_type", "")) == "codex" and not str(entry.get("objective", "")).is_empty()), "El Diario permite leer el texto completo de personajes, lugares y acontecimientos")
+	suite.check(scene.start_directed_scene("aren_memorial", "valdoria_explore", "personal_quest", "valdoria"), "Una misión personal se inicia desde su escena externa")
+	scene.complete_directed_scene_with_default_choices()
+	suite.equal(str((scene.narrative_state["quests"] as Dictionary)["personal_aren"]["status"]), "completed", "Una misión personal alcanza y persiste su desenlace")
+
+	suite.section("Integración de Fase 7 · Mundo explorable")
+	scene.game_state = "world_map"
+	scene.chapter = 5
+	for location_value in scene.locations:
+		var world_location: Dictionary = location_value
+		WorldExplorationSystem.discover(scene.world_exploration_state, str(world_location["id"]))
+		scene.unlock_location(str(world_location["id"]))
+	WorldExplorationSystem.synchronize_progress(scene.world_exploration_state, scene.unlocked_locations, scene.chapter)
+	suite.check(bool(scene.world_exploration_state["ship_unlocked"]), "Completar Celestia desbloquea barcos y rutas marítimas")
+	for destination_value in scene.locations:
+		var destination: Dictionary = destination_value
+		suite.check(not WorldExplorationSystem.route_between("valdoria", str(destination["id"]), scene.world_exploration_state, scene.chapter).is_empty(), "La campaña conserva una ruta a %s" % str(destination["id"]))
+	var danger: Dictionary = WorldExplorationSystem.DANGER_ZONES[0]
+	WorldExplorationSystem.set_position(scene.world_exploration_state, danger["position"] as Vector2)
+	scene.start_world_encounter(danger, "world")
+	suite.equal(scene.game_state, "battle", "Entrar en un peligro visible inicia el combate del mapa")
+	suite.check(await win_current_battle(tree, scene), "El encuentro del mundo puede resolverse con las órdenes reales")
+	suite.equal(scene.game_state, "world_map", "Vencer devuelve al punto exacto del mapa mundial")
+	suite.check(str(danger["id"]) in (scene.world_exploration_state["defeated_encounters"] as Array), "La reaparición del peligro queda registrada")
+	WorldExplorationSystem.set_position(scene.world_exploration_state, Vector2(235, 300))
+	var world_camp := WorldExplorationSystem.camp(scene.world_exploration_state, scene.locations)
+	suite.check(bool(world_camp["success"]), "El grupo puede acampar y fijar un retorno seguro")
+	for landmark_value in WorldExplorationSystem.LANDMARKS:
+		var landmark: Dictionary = landmark_value
+		scene.enter_world_location(str(landmark["id"]))
+		await frame(tree, scene)
+		suite.equal(scene.game_state, "landmark", "%s se puede visitar sin perder el punto de retorno" % str(landmark["name"]))
+		scene.return_to_world_map()
+		suite.equal(scene.game_state, "world_map", "%s permite regresar al mapa" % str(landmark["name"]))
+
+	suite.section("Integración de Fase 8 · Ciudades vivas")
+	for city_id in ["valdoria", "brumaforja", "celestia", "sylvaran"]:
+		scene.enter_city(city_id)
+		await frame(tree, scene)
+		suite.equal(scene.game_state, "city", "%s abre su centro urbano vivo tras completar su capítulo" % city_id)
+		var visited_district_names: Array[String] = []
+		for district_step in 3:
+			var district: Dictionary = scene.city_life_system.district(scene.city_life_state, city_id)
+			visited_district_names.append(str(district["name"]))
+			suite.check(scene.city_actions().any(func(action: Dictionary): return str(action["id"]) == "venue"), "%s ofrece interiores en %s" % [city_id, str(district["name"])])
+			scene.city_life_system.change_district(scene.city_life_state, city_id, 1)
+		suite.equal(visited_district_names.size(), 3, "%s permite recorrer sus tres barrios" % city_id)
+		var current_district: Dictionary = scene.city_life_system.district(scene.city_life_state, city_id)
+		var first_venue: Dictionary = (current_district["venues"] as Array)[0]
+		suite.check(scene.city_life_system.enter_venue(scene.city_life_state, city_id, str(first_venue["id"])), "%s permite entrar en %s" % [city_id, str(first_venue["name"])])
+		await frame(tree, scene)
+		suite.check(scene.city_actions().any(func(action: Dictionary): return str(action["id"]) == "service"), "El interior de %s ofrece una interacción propia" % city_id)
+		scene.begin_city_conversation()
+		suite.equal(scene.dialogue_system.lines.size(), 4, "Los NPC con horario de %s reaccionan al capítulo y la hora" % city_id)
+		scene.finish_dialogue()
+		scene.city_life_system.leave_venue(scene.city_life_state, city_id)
+		scene.hear_city_rumor()
+		var conflict_result: Dictionary = {}
+		for conflict_stage in 3: conflict_result = scene.city_life_system.advance_conflict(scene.city_life_state, city_id)
+		suite.check(bool(conflict_result.get("completed", false)), "El conflicto local de %s puede completarse" % city_id)
+		var challenge: Dictionary = scene.city_life_system.activity_challenge(scene.city_life_state, city_id)
+		scene.city_activity_active = true
+		scene.city_activity_choice = int(challenge["answer"])
+		await frame(tree, scene)
+		scene.resolve_city_activity()
+		suite.check(not scene.city_activity_active and int(((scene.city_life_state["activities"] as Dictionary)[city_id] as Dictionary)["plays"]) > 0, "La actividad característica de %s se renderiza y es jugable" % city_id)
+		scene.return_to_world_map()
+	suite.check(scene.city_life_system.validate_state(scene.city_life_state).is_empty(), "El recorrido completo de las ciudades conserva un estado válido")
+
+	suite.section("Integración de Fase 9 · Mazmorras multinivel")
+	scene.current_landmark = "eira_ruins"
+	scene.game_state = "landmark"
+	scene.explore_current_landmark()
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "dungeon_crawl", "Explorar una localización abre su mazmorra isométrica")
+	suite.equal(str(scene.dungeon_exploration_state["active_dungeon"]), "eira_ruins", "La mazmorra activa coincide con la localización mundial")
+	var start_cell := DungeonExplorationSystem.position(scene.dungeon_exploration_state)
+	var movement_result := DungeonExplorationSystem.move(scene.dungeon_exploration_state, Vector2i.RIGHT)
+	suite.check(bool(movement_result["success"]) and DungeonExplorationSystem.position(scene.dungeon_exploration_state) != start_cell, "El control de mazmorra mueve al héroe sobre tiles")
+	scene.dungeon_exploration_state["position"] = DungeonExplorationSystem.vector_to_array(DungeonExplorationSystem.find_tile(0, "P"))
+	scene.resolve_dungeon_interaction(DungeonExplorationSystem.interact(scene.dungeon_exploration_state, DungeonExplorationSystem.available_abilities(scene.party)))
+	suite.check("eira_ruins" in (scene.dungeon_exploration_state["revealed_secrets"] as Array), "La capacidad de Aren revela el secreto de las ruinas")
+	scene.dungeon_exploration_state["floor"] = 2
+	scene.dungeon_exploration_state["position"] = DungeonExplorationSystem.vector_to_array(DungeonExplorationSystem.find_tile(2, "E"))
+	scene.resolve_dungeon_interaction(DungeonExplorationSystem.interact(scene.dungeon_exploration_state, DungeonExplorationSystem.available_abilities(scene.party)))
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "landmark", "Completar la última planta devuelve a la localización sin bloquear la campaña")
+	suite.check("eira_ruins" in (scene.dungeon_exploration_state["completed_dungeons"] as Array), "La finalización de la mazmorra persiste")
+
+	suite.section("Integración de Fase 10 · Historias y formación")
+	for personal_id in ["aren_1", "naia_1"]:
+		suite.check(bool(scene.hero_story_system.start_chapter(scene.hero_story_state, personal_id)["success"]), "%s puede iniciarse desde el diario" % personal_id)
+		scene.start_dialogue(scene.hero_story_system.chapter_dialogue_lines(personal_id), "world_map", "hero_chapter:" + personal_id, "world")
+		await frame(tree, scene)
+		suite.equal(scene.dialogue_system.lines.size(), 5, "%s renderiza su secuencia narrativa" % personal_id)
+		scene.finish_dialogue()
+		await frame(tree, scene)
+	suite.check(bool((scene.party[4] as Dictionary)["joined"]), "El prólogo de Naia la incorpora como protagonista jugable")
+	suite.check(bool(HeroStorySystem.toggle_active(scene.party, "brom")["success"]), "Un miembro inicial puede pasar a reserva")
+	suite.check(bool(HeroStorySystem.toggle_active(scene.party, "naia")["success"]), "Naia puede entrar en la formación activa")
+	scene.open_game_menu("world_map")
+	scene.menu_tab = 3
+	scene.menu_index = 4
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "game_menu", "El menú de grupo renderiza el retrato del quinto protagonista")
+	scene.close_game_menu()
+	scene.start_world_encounter({"id":"phase10_playable", "enemy":"crypt_rat"}, "world")
+	suite.check((scene.party_battle["allies"] as Array).any(func(member: Dictionary): return str(member["id"]) == "naia"), "La formación elegida lleva a Naia al combate real")
+	suite.check(await win_current_battle(tree, scene), "El combate con una protagonista nueva se resuelve")
+
+	suite.section("Integración de Fases 11-15 · Sistemas finales")
+	suite.check(int(scene.bestiary_state["total_defeated"]) > 0 and (scene.bestiary_state["records"] as Dictionary).has("crypt_rat"), "Los combates reales alimentan el bestiario")
+	suite.check(bool(BestiarySystem.scan(scene.bestiary_state, "crypt_rat")["success"]), "La criatura observada se puede analizar desde Extras")
+	var gold_before_market: int = int(scene.gold)
+	var market_result := CommerceSystem.buy(scene.commerce_state, "valdoria", 0, scene.gold, scene.inventory, scene.equipment_state)
+	scene.gold = int(market_result.get("gold", scene.gold))
+	suite.check(bool(market_result["success"]) and scene.gold < gold_before_market, "El mercado integrado compra, entrega y descuenta oro")
+	scene.current_city = "valdoria"
+	scene.open_game_menu("world_map")
+	scene.menu_tab = 5
+	scene.menu_index = 2
+	scene.activate_menu_item()
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "dialogue", "Aceptar una misión de facción abre su escena narrativa")
+	scene.finish_dialogue()
+	await frame(tree, scene)
+	scene.open_game_menu("world_map")
+	scene.menu_tab = 5
+	scene.menu_index = 2
+	scene.activate_menu_item()
+	await frame(tree, scene)
+	scene.finish_dialogue()
+	await frame(tree, scene)
+	suite.equal(str((scene.faction_state["quest_status"] as Dictionary)["lion_crown_01"]), "completed", "La misión de facción completa sus etapas y persiste")
+	EndgameSystem.unlock(scene.endgame_state)
+	scene.open_game_menu("world_map")
+	scene.menu_tab = 5
+	scene.menu_index = 3
+	scene.activate_menu_item()
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "battle", "La Arena de los Ecos inicia un combate escalado")
+	suite.check(await win_current_battle(tree, scene), "El combate de arena se resuelve con el sistema de batalla completo")
+	suite.check(1 in (scene.endgame_state["arena_cleared"] as Array), "La victoria de arena queda registrada")
+	scene.refresh_completion_progress()
+	suite.check((scene.completion_state["unlocked"] as Array).size() > 0, "Los logros se sincronizan con la partida real")
 	var phase_three_payload: Dictionary = scene.save_payload()
 	suite.check(phase_three_payload.has("phase3_state") and phase_three_payload.has("dungeon_defeated"), "El guardado conserva toda la Fase 3")
 	suite.check(bool(phase_three_payload.get("resonance_tutorial_seen", false)), "El guardado conserva el tutorial de Resonancia de la Fase 4")
+	suite.check(phase_three_payload.has("equipment_state") and phase_three_payload.has("advancement_state") and phase_three_payload.has("narrative_state"), "El guardado conserva íntegramente las Fases 5 y 6")
+	suite.check(phase_three_payload.has("world_exploration_state") and phase_three_payload.has("city_life_state"), "El guardado conserva mundo, clima, campamentos, barrios, horarios y actividades")
+	suite.check(phase_three_payload.has("dungeon_exploration_state") and phase_three_payload.has("hero_story_state"), "El guardado v11 conserva las fases 9 y 10")
+	suite.check(phase_three_payload.has("bestiary_state") and phase_three_payload.has("commerce_state") and phase_three_payload.has("faction_state") and phase_three_payload.has("endgame_state") and phase_three_payload.has("completion_state"), "El guardado v16 conserva todos los sistemas finales")
 
 	var payload: Dictionary = scene.save_payload() as Dictionary
 	scene.gold = 0
 	scene.apply_loaded_data(payload)
 	suite.check(scene.gold > 0, "Aplicar un guardado restaura la economía")
-	for tab in 4:
+	for tab in 7:
 		scene.open_game_menu("world_map")
 		scene.menu_tab = tab
 		await frame(tree, scene)
 		suite.equal(scene.game_state, "game_menu", "La pestaña %d del menú se renderiza" % tab)
 		scene.close_game_menu()
 	scene.arrive_at_destination("sanctuary")
+	await frame(tree, scene)
+	suite.equal(scene.active_directed_scene, "road_valdoria_banter", "Viajar activa una conversación opcional del grupo")
+	scene.finish_dialogue()
 	await frame(tree, scene)
 	suite.equal(scene.game_state, "explore", "Viajar al santuario abre la exploración")
 	suite.check(controller.player is CharacterBody2D, "La exploración utiliza CharacterBody2D")
@@ -210,6 +396,18 @@ static func run(suite: TestSuite, tree: SceneTree) -> void:
 	suite.equal(scene.chapter, 6, "El progreso final queda registrado")
 	suite.check(ProgressionSystem.validate_party(scene.party).is_empty(), "El grupo final mantiene estadísticas válidas")
 	suite.check(InventorySystem.validate(scene.inventory).is_empty(), "El inventario final mantiene datos válidos")
+	suite.check(EquipmentSystem.validate(scene.equipment_state).is_empty(), "El equipo final mantiene todas sus invariantes")
+	suite.check(AdvancementSystem.validate(scene.advancement_state).is_empty(), "La progresión final mantiene todas sus invariantes")
+	suite.check(scene.narrative_system.validate_state(scene.narrative_state).is_empty(), "La narrativa final mantiene todas sus ramas persistentes")
+	EndgameSystem.unlock(scene.endgame_state)
+	scene.endgame_state["arena_cleared"] = range(1, 26)
+	for boss in EndgameSystem.SUPERBOSSES: (scene.endgame_state["superbosses_defeated"] as Array).append(str((boss as Array)[0]))
+	var carried_level := int((scene.party[0] as Dictionary)["level"])
+	scene.start_new_game_plus_campaign()
+	await frame(tree, scene)
+	suite.equal(int(scene.endgame_state["ng_plus_cycle"]), 1, "La Nueva Partida + se inicia desde el menú final")
+	suite.equal(int((scene.party[0] as Dictionary)["level"]), carried_level, "Nueva Partida + conserva niveles, equipo e inventario")
+	suite.equal(scene.game_state, "dialogue", "El nuevo ciclo vuelve al prólogo sin perder el legado")
 	scene.queue_free()
 	await tree.process_frame
 	UnitTests.cleanup_test_directory(integration_save_dir)

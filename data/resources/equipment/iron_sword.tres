@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "iron_sword"
+display_name = "Espada de hierro"
+description = "Hoja fiable de la guardia de Valdoria."
+slot = 0
+rarity = 0
+weapon_type = "sword"
+allowed_character_ids = Array[String](["aren", "kael"])
+stat_bonuses = {"attack": 5}
+recipe = {"Hierro resonante": 2}
+craft_gold = 30

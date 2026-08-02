@@ -1,0 +1,104 @@
+{
+  "heroes": {
+    "aren": {
+      "name": "Aren", "role": "Caballero del Cristal", "ability": "push",
+      "conflict": "Decidir si un juramento protege a un pueblo o lo somete a la voluntad de una corona.",
+      "antagonist": "Canciller Maelor", "boss": "El León Coronado",
+      "chapters": [
+        {"id":"aren_1","title":"Prólogo · El juramento roto","place":"Valdoria","synopsis":"Aren descubre que su ceremonia de investidura fue construida sobre nombres borrados.","revelation":"Su padre custodió el fragmento para impedir que Maelor rehiciera la Corona."},
+        {"id":"aren_2","title":"I · Los escudos sin blasón","place":"Fortaleza del Juramento","synopsis":"Veteranos sin casa reclaman los emblemas que el palacio les arrebató.","revelation":"La lealtad de los soldados era hacia sus vecinos, no hacia el trono."},
+        {"id":"aren_3","title":"II · La ley del vencedor","place":"Valdoria","synopsis":"Maelor impone juicios militares para silenciar el Consejo Abierto.","revelation":"Aren puede romper legalmente su propio juramento pronunciando los nombres omitidos."},
+        {"id":"aren_4","title":"III · Un león para nadie","place":"Salón de la Corona","synopsis":"Aren afronta al León Coronado y decide qué significa gobernar sin dueño.","revelation":"El cristal acepta una promesa compartida y rechaza la sangre real."}
+      ]
+    },
+    "lyra": {
+      "name": "Lyra", "role": "Astrómante", "ability": "decipher",
+      "conflict": "Salvar el conocimiento prohibido sin convertirlo en otra herramienta de dominio.",
+      "antagonist": "Arconte Veyr", "boss": "El Astrolabio Ciego",
+      "chapters": [
+        {"id":"lyra_1","title":"Prólogo · La estrella tachada","place":"Observatorio de Valdoria","synopsis":"Lyra encuentra una constelación arrancada de todos los mapas oficiales.","revelation":"La estrella marca refugios construidos por quienes huyeron de la primera Corona."},
+        {"id":"lyra_2","title":"I · Cartas para un cielo falso","place":"Puerto Celestia","synopsis":"Los cartógrafos de Veyr venden rutas seguras solo a los capitanes obedientes.","revelation":"El cielo cambia porque un astrolabio roba la memoria de los navegantes."},
+        {"id":"lyra_3","title":"II · La biblioteca sumergida","place":"Isla del Velo","synopsis":"Lyra desciende a un archivo donde cada libro exige olvidar otro recuerdo.","revelation":"Su maestra eligió desaparecer para preservar una ruta libre."},
+        {"id":"lyra_4","title":"III · El nombre de la noche","place":"Torre de las Estrellas","synopsis":"Veyr activa el Astrolabio Ciego para fijar un único futuro sobre Eryndor.","revelation":"Lyra renuncia a predecir y enseña al instrumento a mostrar posibilidades."}
+      ]
+    },
+    "brom": {
+      "name": "Brom", "role": "Guardián rúnico", "ability": "break",
+      "conflict": "Reconstruir un clan sin repetir la deuda y el silencio que lo destruyeron.",
+      "antagonist": "Thane Hrold", "boss": "El Yunque Devorador",
+      "chapters": [
+        {"id":"brom_1","title":"Prólogo · La última campana","place":"Brumaforja","synopsis":"Una campana de clan suena bajo una mina clausurada y llama a Brom por su nombre infantil.","revelation":"Su clan no murió en un accidente: fue encerrado por denunciar las balanzas falsas."},
+        {"id":"brom_2","title":"I · Hierro sin herederos","place":"Galerías Profundas","synopsis":"Aprendices sin apellido ocupan la fragua abandonada del clan de Brom.","revelation":"Las runas responden mejor a manos distintas trabajando al mismo ritmo."},
+        {"id":"brom_3","title":"II · La deuda de la ceniza","place":"Gruta de las Ascuas","synopsis":"Hrold despierta una veta viva alimentándola con contratos de deuda.","revelation":"Cada contrato quemado devuelve una voz al metal."},
+        {"id":"brom_4","title":"III · El primer golpe","place":"Yunque Alto","synopsis":"Brom combate al Yunque Devorador ante todos los clanes reunidos.","revelation":"Funda un taller donde el primer golpe pertenece siempre al aprendiz más joven."}
+      ]
+    },
+    "seris": {
+      "name": "Seris", "role": "Arquera lunar", "ability": "track",
+      "conflict": "Proteger los nombres verdaderos sin permitir que el bosque decida quién merece tener uno.",
+      "antagonist": "Guardanombres Vael", "boss": "La Raíz del Olvido",
+      "chapters": [
+        {"id":"seris_1","title":"Prólogo · Huellas que no son tuyas","place":"Sylvaran","synopsis":"Seris sigue sus propias pisadas hasta un día que no recuerda haber vivido.","revelation":"Vael arrancó parte de su nombre para convertirla en una guardiana obediente."},
+        {"id":"seris_2","title":"I · La frontera de musgo","place":"Bosque de la Luna Baja","synopsis":"Árboles y soldados comparten huellas mientras ambos bandos niegan una tregua.","revelation":"Los mensajeros desaparecidos fundaron un sendero neutral."},
+        {"id":"seris_3","title":"II · Cazadores de sílabas","place":"Casa de los Nombres","synopsis":"Mercaderes capturan nombres verdaderos para venderlos como amuletos.","revelation":"Un nombre entregado libremente no puede ser encerrado."},
+        {"id":"seris_4","title":"III · Lo que la raíz devuelve","place":"Raíz Antigua","synopsis":"Vael despierta la Raíz del Olvido para borrar toda frontera y toda diferencia.","revelation":"Seris recupera su nombre completo y permite que cada pueblo elija el suyo."}
+      ]
+    },
+    "naia": {
+      "name": "Naia", "role": "Corsaria de mareas", "ability": "sail",
+      "conflict": "Liberar el mar de monopolios sin convertir la libertad corsaria en ley del más fuerte.",
+      "antagonist": "Almirante Ors", "boss": "Leviatán de las Cadenas",
+      "chapters": [
+        {"id":"naia_1","title":"Prólogo · La capitana sin barco","place":"Puerto Celestia","synopsis":"Naia regresa con una tripulación viva y un navío confiscado por el consejo.","revelation":"Ors provocó el naufragio que convirtió a su familia en contrabandistas."},
+        {"id":"naia_2","title":"I · Cartas de agua","place":"Mar del Velo","synopsis":"Corrientes escritas con sal conducen a barcos desaparecidos.","revelation":"Las rutas cambian para protegerse de quienes pretenden poseerlas."},
+        {"id":"naia_3","title":"II · El precio de cada puerto","place":"Muelles Astrales","synopsis":"Ors compra capitanes y bloquea el alimento de los barrios bajos.","revelation":"La vieja flota corsaria guardaba un pacto de rescate mutuo."},
+        {"id":"naia_4","title":"III · Ninguna bandera","place":"Isla del Velo","synopsis":"Naia rompe las cadenas del Leviatán mientras decide qué flota nacerá después.","revelation":"Los puertos aceptan una carta común de paso y refugio."}
+      ]
+    },
+    "kael": {
+      "name": "Kael", "role": "Correo de sombras", "ability": "shadowstep",
+      "conflict": "Exponer una red de espionaje cuando hacerlo también revela a quienes protegió con sus mentiras.",
+      "antagonist": "Madre Umbría Sava", "boss": "El Doble sin Rostro",
+      "chapters": [
+        {"id":"kael_1","title":"Prólogo · Una carta sin remitente","place":"Valdoria","synopsis":"Kael recibe una orden escrita con su letra para asesinar a alguien que ya está muerto.","revelation":"Sava fabricó dobles de sus correos usando recuerdos robados."},
+        {"id":"kael_2","title":"I · Los pasillos velados","place":"Fortaleza del Juramento","synopsis":"Rejas de sombra ocultan una prisión que no figura en ningún plano.","revelation":"Los presos son testigos protegidos a quienes la red decidió no liberar jamás."},
+        {"id":"kael_3","title":"II · La verdad del mensajero","place":"Valdoria","synopsis":"Cada aliado de Kael recibe una versión distinta de su pasado.","revelation":"Una mentira dicha para salvar a alguien sigue reclamando una deuda."},
+        {"id":"kael_4","title":"III · Dos pasos al amanecer","place":"Cámara Umbría","synopsis":"Kael persigue a su doble entre instantes congelados por Sava.","revelation":"Destruye la red publicando sus rutas y conserva solo los nombres de los refugiados."}
+      ]
+    },
+    "mira": {
+      "name": "Mira", "role": "Cantora de runas", "ability": "attune",
+      "conflict": "Dar voz a las piedras antiguas sin aceptar que el pasado tenga derecho a gobernar el presente.",
+      "antagonist": "Prelado Othmar", "boss": "El Coro de los Primeros",
+      "chapters": [
+        {"id":"mira_1","title":"Prólogo · La nota bajo la plaza","place":"Valdoria","synopsis":"Mira oye una novena voz bajo las ocho campanas de la ciudad.","revelation":"La voz pertenece a quienes construyeron el palacio y fueron borrados del himno."},
+        {"id":"mira_2","title":"I · Runas que desafinan","place":"Ruinas de Eira","synopsis":"Los monumentos recitan versiones incompatibles de la fundación de Eryndor.","revelation":"Ninguna piedra miente, pero cada una recuerda solo el lado que presenció."},
+        {"id":"mira_3","title":"II · El silencio obligatorio","place":"Brumaforja","synopsis":"Othmar prohíbe cantos de trabajo que alteran las runas de propiedad.","revelation":"La armonía colectiva puede reescribir un sello sin destruirlo."},
+        {"id":"mira_4","title":"III · Todas las voces","place":"Santuario del Cristal","synopsis":"El Coro de los Primeros exige que el mundo repita su edad perfecta.","revelation":"Mira añade voces presentes al acorde y convierte una orden en conversación."}
+      ]
+    },
+    "orin": {
+      "name": "Orin", "role": "Buscador de reliquias", "ability": "grapple",
+      "conflict": "Devolver los tesoros saqueados cuando toda su reputación nació de encontrarlos primero.",
+      "antagonist": "Coleccionista Rheda", "boss": "El Museo Hambriento",
+      "chapters": [
+        {"id":"orin_1","title":"Prólogo · El mapa en la cicatriz","place":"Brumaforja","synopsis":"Una cicatriz de Orin reproduce un mapa que nunca recuerda haberse tatuado.","revelation":"Rheda marcó a sus expedicionarios para encontrar reliquias incluso después de muertos."},
+        {"id":"orin_2","title":"I · Dueños de las ruinas","place":"Torre de las Estrellas","synopsis":"Tres ciudades reclaman el mismo observatorio y ninguna escucha a sus habitantes.","revelation":"La torre fue un refugio común, no un monumento nacional."},
+        {"id":"orin_3","title":"II · La colección respira","place":"Galería de Rheda","synopsis":"Reliquias arrancadas de sus lugares forman un laberinto que devora visitantes.","revelation":"Cada objeto conserva el camino a casa y puede guiar al siguiente."},
+        {"id":"orin_4","title":"III · Lo que no se exhibe","place":"Bóveda Errante","synopsis":"Orin combate al Museo Hambriento entre recuerdos catalogados como propiedad.","revelation":"Funda una red de custodios locales y deja su hallazgo más valioso sin firma."}
+      ]
+    }
+  },
+  "cross_quests": [
+    {"id":"oaths_and_shadows","title":"Juramentos y sombras","heroes":["aren","kael"],"summary":"Aren y Kael revelan qué leyes permitieron funcionar a las prisiones secretas."},
+    {"id":"stars_and_tides","title":"Estrellas sobre la marea","heroes":["lyra","naia"],"summary":"Lyra y Naia reconstruyen una ruta que ningún consejo puede vender."},
+    {"id":"rune_and_root","title":"La piedra aprende un nombre","heroes":["brom","seris","mira"],"summary":"Tres memorias incompatibles deben compartir una frontera sin destruirse."},
+    {"id":"relics_without_owner","title":"Reliquias sin dueño","heroes":["orin","mira"],"summary":"Orin y Mira devuelven voz y contexto a una colección de objetos robados."},
+    {"id":"eight_roads","title":"Ocho caminos, una hoguera","heroes":["aren","lyra","brom","seris","naia","kael","mira","orin"],"summary":"El grupo confronta lo que cada uno teme perder si la Corona desaparece."},
+    {"id":"the_open_map","title":"El mapa abierto","heroes":["lyra","naia","kael","orin"],"summary":"Cartógrafos, corsarios, correos y exploradores publican todas las rutas de refugio."}
+  ],
+  "finale": {
+    "id":"common_finale","title":"Final · La Corona de Todos","antagonist":"La Memoria de la Primera Reina","boss":"La Corona Hueca",
+    "summary":"Los ocho protagonistas reúnen juramentos, mapas, runas, nombres, mareas, secretos, canciones y reliquias para decidir si Eryndor necesita otra Corona."
+  }
+}

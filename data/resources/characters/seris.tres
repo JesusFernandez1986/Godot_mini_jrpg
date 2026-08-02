@@ -17,5 +17,6 @@ speed = 17
 sprite_index = 3
 element = "ice"
 weapon = "bow"
+exploration_ability = "track"
 weaknesses = Array[String](["fire"])
 resistances = Array[String](["ice"])

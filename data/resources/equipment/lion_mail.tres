@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lion_mail"
+display_name = "Cota del León"
+description = "Anillas de ámbar templado recuperadas de las catacumbas."
+slot = 1
+rarity = 2
+allowed_character_ids = Array[String](["aren", "brom", "orin"])
+stat_bonuses = {"max_hp": 25, "defense": 9, "speed": -2}
+passive_id = "guard_master"
+recipe = {"Hierro resonante": 4, "Fragmento prismático": 1}
+craft_gold = 110

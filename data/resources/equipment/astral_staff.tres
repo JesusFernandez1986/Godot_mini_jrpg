@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "astral_staff"
+display_name = "Báculo astral"
+description = "Catalizador de los cartógrafos de Celestia."
+slot = 0
+rarity = 1
+weapon_type = "staff"
+element = "lightning"
+allowed_character_ids = Array[String](["lyra", "mira"])
+stat_bonuses = {"magic": 7, "max_mp": 4}
+recipe = {"Hilo lunar": 2, "Fragmento prismático": 1}
+craft_gold = 55

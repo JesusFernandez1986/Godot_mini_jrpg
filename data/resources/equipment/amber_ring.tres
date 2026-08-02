@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "amber_ring"
+display_name = "Anillo de ámbar"
+description = "Recuerda al portador por qué sigue luchando."
+slot = 2
+rarity = 1
+stat_bonuses = {"max_hp": 6, "max_mp": 3, "magic": 2}
+recipe = {"Fragmento prismático": 1}
+craft_gold = 45

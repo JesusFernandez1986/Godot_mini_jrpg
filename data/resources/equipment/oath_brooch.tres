@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "oath_brooch"
+display_name = "Broche del juramento"
+description = "Reliquia legendaria del León Despierto."
+slot = 2
+rarity = 4
+stat_bonuses = {"max_hp": 20, "max_mp": 8, "attack": 5, "defense": 5, "magic": 5, "speed": 3}
+passive_id = "oathkeeper"
+recipe = {"Hierro resonante": 6, "Hilo lunar": 6, "Fragmento prismático": 3}
+craft_gold = 300
+max_upgrade = 5

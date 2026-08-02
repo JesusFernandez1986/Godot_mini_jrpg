@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "astral_robe"
+display_name = "Túnica astral"
+description = "Bordada con constelaciones que cambian al respirar."
+slot = 1
+rarity = 2
+allowed_character_ids = Array[String](["lyra", "seris", "mira", "naia"])
+stat_bonuses = {"max_mp": 10, "magic": 7, "defense": 3}
+passive_id = "elemental_focus"
+recipe = {"Hilo lunar": 5, "Fragmento prismático": 1}
+craft_gold = 110

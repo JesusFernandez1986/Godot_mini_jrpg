@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orin"
+display_name = "Orin"
+role = "Buscador de reliquias"
+base_level = 3
+base_hp = 48
+base_mp = 8
+attack = 17
+defense = 14
+magic = 5
+speed = 7
+sprite_index = 7
+element = "earth"
+weapon = "axe"
+exploration_ability = "grapple"
+weaknesses = Array[String](["wind"])
+resistances = Array[String](["earth"])

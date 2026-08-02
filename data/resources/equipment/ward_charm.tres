@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ward_charm"
+display_name = "Talismán custodio"
+description = "Un sello contra las voces del Velo."
+slot = 2
+rarity = 2
+stat_bonuses = {"defense": 5, "max_hp": 10}
+passive_id = "unyielding"
+recipe = {"Hierro resonante": 2, "Hilo lunar": 2}
+craft_gold = 75

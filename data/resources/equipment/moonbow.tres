@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "moonbow"
+display_name = "Arco lunar"
+description = "Arco de plata viva que apenas produce sonido."
+slot = 0
+rarity = 1
+weapon_type = "bow"
+element = "ice"
+allowed_character_ids = Array[String](["seris", "naia"])
+stat_bonuses = {"attack": 5, "speed": 5}
+recipe = {"Hilo lunar": 3, "Hierro resonante": 1}
+craft_gold = 55

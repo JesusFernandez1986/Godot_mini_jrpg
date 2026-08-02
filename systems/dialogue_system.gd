@@ -24,7 +24,15 @@ func update(delta: float, characters_per_second: float) -> void:
 func current_pair() -> Array:
 	if lines.is_empty():
 		return ["", ""]
-	return lines[clampi(index, 0, lines.size() - 1)] as Array
+	var line: Variant = lines[clampi(index, 0, lines.size() - 1)]
+	if line is Dictionary:
+		return [str(line.get("speaker", "")), str(line.get("text", ""))]
+	return line as Array
+
+func current_metadata() -> Dictionary:
+	if lines.is_empty(): return {}
+	var line: Variant = lines[clampi(index, 0, lines.size() - 1)]
+	return (line as Dictionary).duplicate(true) if line is Dictionary else {}
 
 func current_text() -> String:
 	return str(current_pair()[1])

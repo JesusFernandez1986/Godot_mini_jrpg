@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "emberbrand"
+display_name = "Marca de Ascua"
+description = "Espada forjada con el fuego que no olvida."
+slot = 0
+rarity = 3
+weapon_type = "sword"
+element = "fire"
+allowed_character_ids = Array[String](["aren", "kael", "naia"])
+stat_bonuses = {"attack": 13, "magic": 4, "speed": 2}
+passive_id = "weakness_hunter"
+recipe = {"Hierro resonante": 5, "Fragmento prismático": 2}
+craft_gold = 180
+max_upgrade = 4

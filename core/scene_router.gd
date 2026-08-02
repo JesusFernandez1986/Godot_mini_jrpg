@@ -3,7 +3,7 @@ extends RefCounted
 
 const VALID_STATES := [
 	"title", "settings", "save_menu", "load_menu", "dialogue", "world_map",
-	"city", "valdoria_explore", "dungeon", "explore", "battle", "game_menu", "victory"
+	"city", "landmark", "valdoria_explore", "dungeon", "dungeon_crawl", "explore", "battle", "game_menu", "victory"
 ]
 
 var current_state := "title"

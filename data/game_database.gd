@@ -5,13 +5,34 @@ const CHARACTERS: Array[CharacterDefinition] = [
 	preload("res://data/resources/characters/aren.tres"),
 	preload("res://data/resources/characters/lyra.tres"),
 	preload("res://data/resources/characters/brom.tres"),
-	preload("res://data/resources/characters/seris.tres")
+	preload("res://data/resources/characters/seris.tres"),
+	preload("res://data/resources/characters/naia.tres"),
+	preload("res://data/resources/characters/kael.tres"),
+	preload("res://data/resources/characters/mira.tres"),
+	preload("res://data/resources/characters/orin.tres")
 ]
 const ITEMS: Array[ItemDefinition] = [
 	preload("res://data/resources/items/potion.tres"),
 	preload("res://data/resources/items/ether.tres"),
 	preload("res://data/resources/items/travel_bread.tres"),
-	preload("res://data/resources/items/eira_crystal.tres")
+	preload("res://data/resources/items/eira_crystal.tres"),
+	preload("res://data/resources/items/resonant_iron.tres"),
+	preload("res://data/resources/items/moon_thread.tres"),
+	preload("res://data/resources/items/prismatic_shard.tres")
+]
+const EQUIPMENT: Array[EquipmentDefinition] = [
+	preload("res://data/resources/equipment/iron_sword.tres"),
+	preload("res://data/resources/equipment/emberbrand.tres"),
+	preload("res://data/resources/equipment/astral_staff.tres"),
+	preload("res://data/resources/equipment/runic_hammer.tres"),
+	preload("res://data/resources/equipment/moonbow.tres"),
+	preload("res://data/resources/equipment/traveler_garb.tres"),
+	preload("res://data/resources/equipment/lion_mail.tres"),
+	preload("res://data/resources/equipment/astral_robe.tres"),
+	preload("res://data/resources/equipment/amber_ring.tres"),
+	preload("res://data/resources/equipment/ward_charm.tres"),
+	preload("res://data/resources/equipment/swift_feather.tres"),
+	preload("res://data/resources/equipment/oath_brooch.tres")
 ]
 const ENEMIES: Array[EnemyDefinition] = [
 	preload("res://data/resources/enemies/lunar_wolf.tres"),
@@ -49,6 +70,20 @@ static func create_party() -> Array:
 		result.append(CHARACTERS[i].create_runtime(i == 0))
 	return result
 
+static func reconcile_party(saved_party: Array) -> Array:
+	var result := saved_party.duplicate(true)
+	for definition in CHARACTERS:
+		var found := false
+		for member in result:
+			if member is Dictionary and str(member.get("id", "")) == definition.id:
+				found = true
+				member["exploration_ability"] = str(member.get("exploration_ability", definition.exploration_ability))
+				member["sprite_index"] = int(member.get("sprite_index", definition.sprite_index))
+				break
+		if not found: result.append(definition.create_runtime(false))
+	HeroStorySystem.normalize_roster(result)
+	return result
+
 static func create_initial_inventory() -> Dictionary:
 	return {
 		ITEMS[0].display_name: ITEMS[0].create_stack(3),
@@ -60,6 +95,12 @@ static func create_initial_inventory() -> Dictionary:
 static func item_by_name(item_name: String) -> ItemDefinition:
 	for definition in ITEMS:
 		if definition.display_name == item_name:
+			return definition
+	return null
+
+static func equipment_by_id(equipment_id: String) -> EquipmentDefinition:
+	for definition in EQUIPMENT:
+		if definition.id == equipment_id:
 			return definition
 	return null
 
@@ -95,7 +136,7 @@ static func quest(chapter: int) -> QuestDefinition:
 static func validate() -> Array[String]:
 	var errors: Array[String] = []
 	var ids: Array[String] = []
-	for definition in CHARACTERS + ITEMS + ENEMIES + LOCATIONS + QUESTS:
+	for definition in CHARACTERS + ITEMS + EQUIPMENT + ENEMIES + LOCATIONS + QUESTS:
 		if definition.id.is_empty():
 			errors.append("Recurso sin identificador: %s" % definition.resource_path)
 		elif definition.id in ids:

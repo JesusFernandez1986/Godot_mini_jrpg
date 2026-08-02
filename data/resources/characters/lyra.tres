@@ -17,5 +17,6 @@ speed = 10
 sprite_index = 1
 element = "lightning"
 weapon = "staff"
+exploration_ability = "decipher"
 weaknesses = Array[String](["earth"])
 resistances = Array[String](["lightning"])

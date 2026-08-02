@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mira"
+display_name = "Mira"
+role = "Cantora de runas"
+base_level = 3
+base_hp = 31
+base_mp = 20
+attack = 6
+defense = 9
+magic = 17
+speed = 11
+sprite_index = 6
+element = "light"
+weapon = "staff"
+exploration_ability = "attune"
+weaknesses = Array[String](["dark"])
+resistances = Array[String](["light"])

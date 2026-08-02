@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "traveler_garb"
+display_name = "Atuendo de viajero"
+description = "Protección ligera para caminos inseguros."
+slot = 1
+rarity = 0
+stat_bonuses = {"max_hp": 8, "defense": 3}
+recipe = {"Hilo lunar": 1}
+craft_gold = 25

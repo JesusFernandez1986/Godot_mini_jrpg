@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "swift_feather"
+display_name = "Pluma del vendaval"
+description = "Nunca señala dos veces en la misma dirección."
+slot = 2
+rarity = 2
+stat_bonuses = {"speed": 8, "attack": 2}
+passive_id = "weakness_hunter"
+recipe = {"Hilo lunar": 3, "Fragmento prismático": 1}
+craft_gold = 85

@@ -1,0 +1,100 @@
+{
+  "cities": {
+    "valdoria": {
+      "name": "Valdoria",
+      "music": "himno_del_leon",
+      "ambience": "campanas, fuentes y pregones",
+      "required_chapter": 1,
+      "districts": [
+        {"id":"lion_square","name":"Plaza del León","description":"La fuente, el palacio y los tablones públicos concentran la vida política.","venues":[{"id":"golden_flagon","name":"Taberna del Grifo Dorado","kind":"tavern"},{"id":"amber_market","name":"Mercado de Ámbar","kind":"market"}]},
+        {"id":"ink_quarter","name":"Barrio de los Tinteros","description":"Copistas, familias antiguas y talleres ocupan callejones cubiertos de enseñas.","venues":[{"id":"lion_forge","name":"Herrería del León","kind":"smithy"},{"id":"memory_house","name":"Casa de la Memoria","kind":"house"}]},
+        {"id":"sun_wall","name":"Muralla del Sol","description":"Soldados, peregrinos y mensajeros vigilan la gran calzada occidental.","venues":[{"id":"sun_inn","name":"Posada del Sol Quieto","kind":"inn"},{"id":"open_council","name":"Consejo Abierto","kind":"hall"}]}
+      ],
+      "npcs": [
+        {"id":"maela","name":"Maela, pregonera","schedule":{"amanecer":"lion_square","día":"lion_square","atardecer":"golden_flagon","noche":"sun_inn"},"lines":{"early":"La Corona protege a quien obedece, o eso dice el pregón.","mid":"Hoy debo leer dos decretos contradictorios sin cambiar de sonrisa.","late":"Ahora el pregón incluye los nombres de quienes nunca tuvieron voz."}},
+        {"id":"tomas","name":"Tomás, curtidor","schedule":{"amanecer":"ink_quarter","día":"ink_quarter","atardecer":"amber_market","noche":"memory_house"},"lines":{"early":"Los guardias pagan tarde y exigen cuero perfecto.","mid":"Alguien compra correas para encadenar libros, no prisioneros.","late":"El consejo nos deja marcar cada pieza con el nombre de su artesano."}},
+        {"id":"sira","name":"Sira, veterana","schedule":{"amanecer":"sun_wall","día":"sun_wall","atardecer":"lion_square","noche":"golden_flagon"},"lines":{"early":"Una ciudad teme más al rumor que al ejército.","mid":"Elara escucha a los barrios; sus oficiales todavía no.","late":"Por primera vez montamos guardia para proteger una asamblea, no un trono."}},
+        {"id":"nuno","name":"Nuño, aprendiz","schedule":{"amanecer":"memory_house","día":"lion_forge","atardecer":"ink_quarter","noche":"sun_inn"},"lines":{"early":"Practico escudos heráldicos, aunque siempre confundo la garza y el grifo.","mid":"He encontrado un blasón borrado bajo la fuente.","late":"Mi nuevo emblema no tiene corona: tiene cuatro manos entrelazadas."}}
+      ],
+      "rumors": [
+        {"id":"eira_stones","text":"Los canteros oyen una voz bajo las ruinas del camino sur.","unlocks":"eira_ruins"},
+        {"id":"ink_smugglers","text":"Un gremio borra deudas a cambio de páginas del archivo real.","unlocks":""},
+        {"id":"wall_votes","text":"Los capitanes discuten si los barrios deberían elegir a sus propios jueces.","unlocks":"iron_fortress"}
+      ],
+      "conflict":{"title":"La ley de los nombres","stages":["Investigar quién elimina nombres del censo de artesanos.","Enfrentar al escribano real y proteger sus pruebas.","Elegir un registro público supervisado por los barrios."]},
+      "activity":{"name":"Torneo de blasones","description":"Reconoce emblemas históricos antes de que caiga la arena.","challenges":[{"prompt":"¿Qué bestia guardaba la fuente antigua?","options":["León","Grifo","Ciervo"],"answer":0},{"prompt":"¿Qué color juraba memoria?","options":["Ámbar","Negro","Violeta"],"answer":0},{"prompt":"¿Quién porta el blasón verdadero?","options":["El rey","El pueblo","El ejército"],"answer":1}]}
+    },
+    "brumaforja": {
+      "name": "Brumaforja",
+      "music": "martillos_de_ceniza",
+      "ambience": "yunques, fuelles y viento volcánico",
+      "required_chapter": 2,
+      "districts": [
+        {"id":"high_anvil","name":"Yunque Alto","description":"Los salones de clan dominan una plaza tallada en basalto.","venues":[{"id":"coal_cup","name":"Taberna de la Copa de Carbón","kind":"tavern"},{"id":"rune_market","name":"Mercado de Runas","kind":"market"}]},
+        {"id":"deep_galleries","name":"Galerías Profundas","description":"Casas excavadas y talleres siguen vetas de metal resonante.","venues":[{"id":"first_hammer","name":"Herrería del Primer Martillo","kind":"smithy"},{"id":"clan_house","name":"Casa de los Clanes","kind":"house"}]},
+        {"id":"caldera_gate","name":"Puerta de la Caldera","description":"Caravanas y mineros cruzan el único paso seguro entre fumarolas.","venues":[{"id":"ember_inn","name":"Posada de la Brasa Mansa","kind":"inn"},{"id":"thane_hall","name":"Sala de los Thanes","kind":"hall"}]}
+      ],
+      "npcs": [
+        {"id":"dorna","name":"Dorna, maestra de veta","schedule":{"amanecer":"deep_galleries","día":"first_hammer","atardecer":"high_anvil","noche":"coal_cup"},"lines":{"early":"El metal recuerda cada golpe; por eso no perdona manos mentirosas.","mid":"Las vetas nuevas vibran con el mismo pulso que vuestro cristal.","late":"Los aprendices ya pueden firmar sus obras sin permiso de clan."}},
+        {"id":"brokk","name":"Brokk, porteador","schedule":{"amanecer":"caldera_gate","día":"caldera_gate","atardecer":"rune_market","noche":"ember_inn"},"lines":{"early":"Pago dos peajes por la misma roca: uno al thane y otro al gremio.","mid":"Alguien desvía carros hacia una gruta prohibida.","late":"La nueva balanza pesa mineral, no apellidos."}},
+        {"id":"yrsa","name":"Yrsa, cantora","schedule":{"amanecer":"clan_house","día":"high_anvil","atardecer":"coal_cup","noche":"thane_hall"},"lines":{"early":"Las canciones antiguas omiten a quienes apagaban los hornos.","mid":"Brom me ha enseñado una estrofa que su clan escondió.","late":"Esta noche cantaremos todos los nombres, incluso los incómodos."}},
+        {"id":"keld","name":"Keld, vigía","schedule":{"amanecer":"caldera_gate","día":"deep_galleries","atardecer":"caldera_gate","noche":"thane_hall"},"lines":{"early":"La ceniza cae hacia el norte. Eso nunca trae nada bueno.","mid":"Vi luces humanas dentro de la Gruta de las Ascuas.","late":"La frontera permanece abierta mientras el juramento sea mutuo."}}
+      ],
+      "rumors": [
+        {"id":"ember_song","text":"Una veta canta sola dentro de la Gruta de las Ascuas.","unlocks":"ember_grotto"},
+        {"id":"false_weights","text":"El gremio altera las balanzas para endeudar a mineros sin clan.","unlocks":""},
+        {"id":"star_metal","text":"Un fragmento celeste cayó junto a una torre de la costa.","unlocks":"star_tower"}
+      ],
+      "conflict":{"title":"El peso del clan","stages":["Comparar las balanzas del gremio y los porteadores.","Abrir los libros de deuda ante los thanes.","Fundar una balanza común dirigida por aprendices."]},
+      "activity":{"name":"Ritual del yunque","description":"Golpea la secuencia de runas sin quebrar el metal vivo.","challenges":[{"prompt":"La runa arde en rojo. ¿Primer golpe?","options":["Centro","Borde","Agua"],"answer":1},{"prompt":"El metal emite un tono grave.","options":["Esperar","Golpear fuerte","Enfriar"],"answer":0},{"prompt":"La veta dibuja una espiral.","options":["Martillo plano","Cincel","Tenazas"],"answer":2}]}
+    },
+    "celestia": {
+      "name": "Puerto Celestia",
+      "music": "mareas_de_cristal",
+      "ambience": "gaviotas, jarcias y campanas de boya",
+      "required_chapter": 3,
+      "districts": [
+        {"id":"astral_docks","name":"Muelles Astrales","description":"Naves mercantes comparten amarras con observatorios flotantes.","venues":[{"id":"blue_comet","name":"Taberna del Cometa Azul","kind":"tavern"},{"id":"tide_market","name":"Mercado de Mareas","kind":"market"}]},
+        {"id":"chartmakers","name":"Barrio de Cartógrafos","description":"Mapas, lentes y viviendas marineras cubren cada balcón.","venues":[{"id":"anchor_forge","name":"Herrería del Ancla","kind":"smithy"},{"id":"chart_house","name":"Casa de las Cartas","kind":"house"}]},
+        {"id":"lighthouse_rise","name":"Alto del Faro","description":"El consejo portuario observa rutas que cambian con las estrellas.","venues":[{"id":"north_star_inn","name":"Posada Estrella del Norte","kind":"inn"},{"id":"harbor_council","name":"Consejo del Puerto","kind":"hall"}]}
+      ],
+      "npcs": [
+        {"id":"naia","name":"Naia, piloto","schedule":{"amanecer":"astral_docks","día":"tide_market","atardecer":"chartmakers","noche":"blue_comet"},"lines":{"early":"Las cartas oficiales dejan una isla en blanco. Los marineros no.","mid":"Lyra leyó una corriente donde yo solo veía espuma.","late":"La nueva ruta pertenece a quien la navega, no a quien vende el mapa."}},
+        {"id":"elio","name":"Elio, farero","schedule":{"amanecer":"lighthouse_rise","día":"lighthouse_rise","atardecer":"harbor_council","noche":"north_star_inn"},"lines":{"early":"Anoche el faro proyectó dos sombras para una sola torre.","mid":"La lente señala la Isla del Velo durante siete latidos.","late":"Dejamos una luz baja para todo barco que regrese sin bandera."}},
+        {"id":"mara","name":"Mara, estibadora","schedule":{"amanecer":"astral_docks","día":"astral_docks","atardecer":"tide_market","noche":"blue_comet"},"lines":{"early":"El consejo cobra por caja y los corsarios por silencio.","mid":"Hay capitanes comprando votos con pasajes gratuitos.","late":"Los muelles eligen a su portavoz a mano alzada."}},
+        {"id":"soren","name":"Soren, aprendiz de carta","schedule":{"amanecer":"chart_house","día":"chartmakers","atardecer":"anchor_forge","noche":"north_star_inn"},"lines":{"early":"Copio costas que cambian antes de secarse la tinta.","mid":"Una torre antigua coincide con tres constelaciones a la vez.","late":"Mi primer mapa incluye refugios, pozos y nombres locales."}}
+      ],
+      "rumors": [
+        {"id":"veiled_steps","text":"La bajamar de luna nueva descubre peldaños hacia la Isla del Velo.","unlocks":"veiled_isle"},
+        {"id":"star_tower_map","text":"Los cartógrafos guardan la ruta terrestre a la Torre de las Estrellas.","unlocks":"star_tower"},
+        {"id":"bought_captains","text":"Tres capitanes reciben oro por bloquear barcos de pescadores.","unlocks":""}
+      ],
+      "conflict":{"title":"El precio de la marea","stages":["Seguir los pagos que compran votos del consejo portuario.","Escoltar a los pescadores durante el bloqueo de los capitanes.","Garantizar una mesa pública para muelles, pilotos y comerciantes."]},
+      "activity":{"name":"Regata de corrientes","description":"Elige corrientes y velas para rodear las boyas astrales.","challenges":[{"prompt":"Viento de través en la primera boya.","options":["Vela corta","Vela plena","Anclar"],"answer":0},{"prompt":"La corriente vira hacia arrecifes.","options":["Norte","Sur","Mantener"],"answer":1},{"prompt":"El faro emite tres destellos.","options":["Entrar a puerto","Virar a isla","Reducir vela"],"answer":2}]}
+    },
+    "sylvaran": {
+      "name": "Sylvaran",
+      "music": "nombres_bajo_las_hojas",
+      "ambience": "hojas, agua y coros lejanos",
+      "required_chapter": 4,
+      "districts": [
+        {"id":"ancient_root","name":"Raíz Antigua","description":"El consejo se reúne alrededor de un árbol más viejo que los reinos.","venues":[{"id":"singing_leaf","name":"Taberna de la Hoja Cantora","kind":"tavern"},{"id":"dew_market","name":"Mercado del Rocío","kind":"market"}]},
+        {"id":"mist_gardens","name":"Jardines de Niebla","description":"Casas vivas y talleres crecen sobre estanques de memoria.","venues":[{"id":"silver_branch","name":"Herrería de Rama de Plata","kind":"smithy"},{"id":"name_house","name":"Casa de los Nombres","kind":"house"}]},
+        {"id":"high_canopy","name":"Dosel Alto","description":"Puentes de cuerda enlazan observatorios, santuarios y puestos de frontera.","venues":[{"id":"quiet_moss","name":"Posada del Musgo Quieto","kind":"inn"},{"id":"root_council","name":"Círculo de Raíces","kind":"hall"}]}
+      ],
+      "npcs": [
+        {"id":"elwen","name":"Elwen, guardanombres","schedule":{"amanecer":"name_house","día":"ancient_root","atardecer":"mist_gardens","noche":"root_council"},"lines":{"early":"Un nombre no es propiedad de quien lo registra.","mid":"Seris ha devuelto al bosque una sílaba que creíamos perdida.","late":"Ahora enseñamos nombres y silencios con el mismo cuidado."}},
+        {"id":"fael","name":"Fael, jardinero","schedule":{"amanecer":"mist_gardens","día":"mist_gardens","atardecer":"dew_market","noche":"quiet_moss"},"lines":{"early":"Las raíces rehúyen el sendero de los recaudadores.","mid":"Alguien tala señales para ocultar una fortaleza fronteriza.","late":"Los jardines conservan una parcela para cada viajero que plante algo."}},
+        {"id":"irin","name":"Irin, exploradora","schedule":{"amanecer":"high_canopy","día":"high_canopy","atardecer":"ancient_root","noche":"singing_leaf"},"lines":{"early":"El Bosque de la Luna Baja cambia sus mojones al anochecer.","mid":"Encontré huellas de soldados y ents caminando juntos.","late":"La nueva ruta evita nidos, tumbas y árboles jóvenes."}},
+        {"id":"sael","name":"Sael, mediador","schedule":{"amanecer":"root_council","día":"ancient_root","atardecer":"root_council","noche":"quiet_moss"},"lines":{"early":"La frontera se discute con mapas dibujados por quienes nunca la pisan.","mid":"La fortaleza acusa al bosque; el bosque ni siquiera conoce la orden.","late":"Un límite cuidado por ambos pueblos ya no parece una herida."}}
+      ],
+      "rumors": [
+        {"id":"low_moon_path","text":"Una hilera de flores blancas abre el Bosque de la Luna Baja.","unlocks":"moonwood"},
+        {"id":"border_fort","text":"La Fortaleza del Juramento retiene mensajeros de ambos lados.","unlocks":"iron_fortress"},
+        {"id":"stolen_names","text":"Mercaderes venden nombres verdaderos como amuletos en la frontera.","unlocks":""}
+      ],
+      "conflict":{"title":"La frontera sin nombre","stages":["Encontrar quién corta los mojones vivos del bosque.","Liberar a los mensajeros retenidos en la frontera.","Trazar una senda compartida que respete árboles y aldeas."]},
+      "activity":{"name":"Canto de las raíces","description":"Repite la secuencia de tonos con hojas de distinto color.","challenges":[{"prompt":"La raíz responde con una nota grave.","options":["Hoja azul","Hoja oro","Silencio"],"answer":2},{"prompt":"Tres luceros descienden sobre el estanque.","options":["Agudo","Grave","Dos pulsos"],"answer":0},{"prompt":"El árbol pronuncia tu nombre.","options":["Responder","Escuchar","Marcharse"],"answer":1}]}
+    }
+  }
+}

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EquipmentDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/equipment_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "runic_hammer"
+display_name = "Martillo rúnico"
+description = "Cada golpe repite una promesa de Brumaforja."
+slot = 0
+rarity = 1
+weapon_type = "hammer"
+element = "earth"
+allowed_character_ids = Array[String](["brom", "orin"])
+stat_bonuses = {"attack": 6, "defense": 4}
+recipe = {"Hierro resonante": 3}
+craft_gold = 55

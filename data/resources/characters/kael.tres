@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/character_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "kael"
+display_name = "Kael"
+role = "Correo de sombras"
+base_level = 3
+base_hp = 34
+base_mp = 12
+attack = 15
+defense = 7
+magic = 9
+speed = 18
+sprite_index = 5
+element = "dark"
+weapon = "spear"
+exploration_ability = "shadowstep"
+weaknesses = Array[String](["light"])
+resistances = Array[String](["dark"])

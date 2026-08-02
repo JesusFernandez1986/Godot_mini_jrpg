@@ -1,0 +1,130 @@
+{
+  "variables": {"council_path":"undecided", "aren_resolve":0, "lyra_trust":0, "brom_honor":0, "seris_roots":0, "people_hope":0},
+  "codex": {
+    "char_elara":{"category":"Personajes", "title":"Capitana Elara", "text":"Custodia los juramentos de Valdoria y desconfía de toda corona que no pueda responder ante su pueblo."},
+    "char_eira":{"category":"Personajes", "title":"Eira, la guardiana", "text":"La primera guardiana del Cristal sacrificó su nombre para que el Velo no pudiera poseerlo."},
+    "place_catacombs":{"category":"Lugares", "title":"Catacumbas del León", "text":"Necrópolis anterior a Valdoria. Sus sellos obedecen a promesas, no a llaves."},
+    "place_mirror_lake":{"category":"Lugares", "title":"Lago de los Espejos", "text":"Un lago sin fondo que devuelve recuerdos en vez de reflejos."},
+    "event_empty_crown":{"category":"Acontecimientos", "title":"La Corona Hueca", "text":"La corona perdió los nombres de sus portadores cuando el rey Vael quiso gobernar también la memoria."},
+    "event_open_council":{"category":"Acontecimientos", "title":"El Consejo Abierto", "text":"Por primera vez, los cuatro pueblos deciden juntos qué hacer con una reliquia real."},
+    "event_truth_path":{"category":"Acontecimientos", "title":"El Juramento de la Verdad", "text":"El consejo decidió revelar los crímenes que dieron origen a la Corona Hueca."},
+    "event_mercy_path":{"category":"Acontecimientos", "title":"El Juramento de la Clemencia", "text":"El consejo decidió sanar primero las heridas antes de pronunciar sentencia."}
+  },
+  "quests": {
+    "main_open_council":{"category":"main", "title":"El consejo de los nombres", "objective":"Decidir el destino de la memoria recuperada."},
+    "personal_aren":{"category":"personal", "title":"La espada sin heredero", "objective":"Acompañar a Aren ante el memorial de su padre."},
+    "personal_lyra":{"category":"personal", "title":"Una estrella que miente", "objective":"Ayudar a Lyra a descifrar el mapa prohibido."},
+    "personal_brom":{"category":"personal", "title":"La última campana", "objective":"Resolver la deuda del clan de Brom."},
+    "personal_seris":{"category":"personal", "title":"El nombre bajo la corteza", "objective":"Devolver a Seris un recuerdo del bosque."}
+  },
+  "scenes": {
+    "council_of_memory": {
+      "kind":"main", "title":"Consejo de los nombres", "start":"c1", "starts_quest":"main_open_council", "completes_quest":"main_open_council",
+      "nodes": {
+        "c1":{"speaker":"Elara", "text":"Las puertas quedan abiertas. Esta decisión no pertenecerá a una sala cerrada.", "portrait":"elara", "expression":"stern", "camera":"pan_left", "movement":"captain_steps", "music":"council", "codex":["char_elara", "event_open_council"], "next":"c2"},
+        "c2":{"speaker":"Lyra", "text":"La Corona contiene la verdad sobre Vael, pero también el dolor de miles. Si la abrimos, ambos despertarán.", "portrait":"lyra", "expression":"worried", "camera":"close_up", "movement":"lyra_turns", "next":"c3"},
+        "c3":{"speaker":"Brom", "text":"Una verdad enterrada sigue siendo un arma. Una verdad arrojada sin cuidado también.", "portrait":"brom", "expression":"stern", "choices":[
+          {"text":"Revelaremos todo y asumiremos las consecuencias.", "next":"truth1", "effects":[{"op":"set", "key":"council_path", "value":"truth"},{"op":"inc", "key":"people_hope", "value":1},{"op":"codex", "id":"event_truth_path"}]},
+          {"text":"Sanaremos primero; la memoria se abrirá gradualmente.", "next":"mercy1", "effects":[{"op":"set", "key":"council_path", "value":"mercy"},{"op":"inc", "key":"people_hope", "value":2},{"op":"codex", "id":"event_mercy_path"}]}
+        ]},
+        "truth1":{"speaker":"Aren", "text":"Entonces mi apellido será el primero en responder. Ningún linaje volverá a esconderse detrás del silencio.", "portrait":"aren", "expression":"determined", "camera":"close_up", "movement":"aren_draws", "next":"truth2"},
+        "truth2":{"speaker":"Seris", "text":"El bosque conoce esa clase de incendio. Lo guiaremos para que ilumine sin devorarlo todo.", "portrait":"seris", "expression":"soft", "next":"end"},
+        "mercy1":{"speaker":"Seris", "text":"La clemencia no es olvido. Es decidir qué semilla puede soportar hoy la luz.", "portrait":"seris", "expression":"soft", "camera":"close_up", "movement":"seris_kneels", "next":"mercy2"},
+        "mercy2":{"speaker":"Aren", "text":"Custodiaremos la memoria, pero el día de responder llegará. Lo prometo ante todos.", "portrait":"aren", "expression":"determined", "next":"end"},
+        "end":{"speaker":"Elara", "text":"Que conste en las cuatro lenguas: hoy la corona dejó de mandar y comenzó a escuchar.", "portrait":"elara", "expression":"hopeful", "camera":"pull_back", "movement":"party_gathers", "codex":["event_empty_crown"], "next":""}
+      }
+    },
+    "aren_memorial": {
+      "kind":"personal", "title":"La espada sin heredero", "start":"a1", "starts_quest":"personal_aren", "completes_quest":"personal_aren",
+      "nodes": {
+        "a1":{"speaker":"Aren", "text":"Mi padre juró proteger Valdoria. Cuando Vael ordenó borrar los nombres, él obedeció.", "portrait":"aren", "expression":"sad", "camera":"pan_right", "movement":"aren_walks", "next":"a2"},
+        "a2":{"speaker":"Lyra", "text":"Obedecer explica la herida. No decide qué harás con ella.", "portrait":"lyra", "expression":"soft", "next":"a3"},
+        "a3":{"speaker":"Aren", "text":"¿Conservo su espada como advertencia o la fundo para reparar el memorial?", "portrait":"aren", "expression":"worried", "choices":[
+          {"text":"Consérvala y cuenta toda su historia.", "next":"a_keep", "effects":[{"op":"inc", "key":"aren_resolve", "value":1}]},
+          {"text":"Fúndela; que el metal repare lo que rompió.", "next":"a_forge", "effects":[{"op":"inc", "key":"aren_resolve", "value":2}]}
+        ]},
+        "a_keep":{"speaker":"Aren", "text":"No será una reliquia orgullosa. Será una pregunta que ningún guardia pueda evitar.", "portrait":"aren", "expression":"determined", "next":"a_end"},
+        "a_forge":{"speaker":"Aren", "text":"Que no quede una espada, sino cientos de letras. Esta vez el hierro servirá a los nombres.", "portrait":"aren", "expression":"hopeful", "next":"a_end"},
+        "a_end":{"speaker":"Lyra", "text":"Has heredado su elección, Aren. Y acabas de elegir de nuevo.", "portrait":"lyra", "expression":"happy", "next":""}
+      }
+    },
+    "lyra_forbidden_map": {
+      "kind":"personal", "title":"Una estrella que miente", "start":"l1", "starts_quest":"personal_lyra", "completes_quest":"personal_lyra",
+      "nodes": {
+        "l1":{"speaker":"Lyra", "text":"El mapa de mi maestra no señala ciudades. Señala cada lugar donde decidió callar.", "portrait":"lyra", "expression":"worried", "camera":"close_up", "movement":"lyra_unrolls_map", "next":"l2"},
+        "l2":{"speaker":"Seris", "text":"Los huecos forman un sendero hacia el Lago de los Espejos.", "portrait":"seris", "expression":"stern", "codex":["place_mirror_lake"], "next":"l3"},
+        "l3":{"speaker":"Lyra", "text":"Puedo entregar el mapa al consejo o seguirlo en secreto. ¿Qué confiarías tú a los demás?", "portrait":"lyra", "expression":"sad", "choices":[
+          {"text":"Comparte el mapa. La verdad necesita testigos.", "next":"l_share", "effects":[{"op":"inc", "key":"lyra_trust", "value":2}]},
+          {"text":"Síguelo primero. Algunas verdades necesitan preparación.", "next":"l_hide", "effects":[{"op":"inc", "key":"lyra_trust", "value":1}]}
+        ]},
+        "l_share":{"speaker":"Lyra", "text":"Me aterra que otros lo interpreten mal. Supongo que confiar empieza aceptando ese riesgo.", "portrait":"lyra", "expression":"hopeful", "next":"l_end"},
+        "l_hide":{"speaker":"Lyra", "text":"Iremos con cuidado y volveremos con algo más firme que una sospecha.", "portrait":"lyra", "expression":"determined", "next":"l_end"},
+        "l_end":{"speaker":"Seris", "text":"El cielo parece solitario porque no vemos los hilos entre sus estrellas.", "portrait":"seris", "expression":"soft", "next":""}
+      }
+    },
+    "brom_last_bell": {
+      "kind":"personal", "title":"La última campana", "start":"b1", "starts_quest":"personal_brom", "completes_quest":"personal_brom",
+      "nodes": {
+        "b1":{"speaker":"Brom", "text":"Esta campana debía sonar si mi clan rompía su juramento. Lleva veinte años esperando.", "portrait":"brom", "expression":"sad", "camera":"pan_up", "movement":"brom_lifts_hammer", "next":"b2"},
+        "b2":{"speaker":"Aren", "text":"Si la haces sonar, Brumaforja conocerá la traición. También conocerá a quienes se opusieron.", "portrait":"aren", "expression":"stern", "next":"b3"},
+        "b3":{"speaker":"Brom", "text":"¿Una campanada por la vergüenza o tres por los que resistieron?", "portrait":"brom", "expression":"worried", "choices":[
+          {"text":"Una por cada verdad, incluso la vergonzosa.", "next":"b_all", "effects":[{"op":"inc", "key":"brom_honor", "value":2}]},
+          {"text":"Tres por quienes mantuvieron vivo el juramento.", "next":"b_three", "effects":[{"op":"inc", "key":"brom_honor", "value":1}]}
+        ]},
+        "b_all":{"speaker":"Brom", "text":"Entonces que nadie elija qué eco merece sobrevivir.", "portrait":"brom", "expression":"determined", "music":"forge_bell", "next":"b_end"},
+        "b_three":{"speaker":"Brom", "text":"Que el primer sonido que oiga mi pueblo sea el valor, no la culpa.", "portrait":"brom", "expression":"hopeful", "music":"forge_bell", "next":"b_end"},
+        "b_end":{"speaker":"Aren", "text":"No eres el último de tu clan. Eres el primero de lo que venga después.", "portrait":"aren", "expression":"soft", "next":""}
+      }
+    },
+    "seris_root_name": {
+      "kind":"personal", "title":"El nombre bajo la corteza", "start":"s1", "starts_quest":"personal_seris", "completes_quest":"personal_seris",
+      "nodes": {
+        "s1":{"speaker":"Seris", "text":"Mi nombre estaba aquí. Lo tallé de niña para que el bosque pudiera encontrarme si yo me perdía.", "portrait":"seris", "expression":"sad", "camera":"close_up", "movement":"seris_touches_tree", "next":"s2"},
+        "s2":{"speaker":"Brom", "text":"La corteza creció sobre él. Eso no significa que lo borrara.", "portrait":"brom", "expression":"soft", "next":"s3"},
+        "s3":{"speaker":"Seris", "text":"Puedo abrir la corteza o confiar en que el árbol aún lo recuerde.", "portrait":"seris", "expression":"worried", "choices":[
+          {"text":"Déjalo crecer. No todo recuerdo necesita verse.", "next":"s_grow", "effects":[{"op":"inc", "key":"seris_roots", "value":2}]},
+          {"text":"Ábrelo con cuidado y comparte el nombre.", "next":"s_open", "effects":[{"op":"inc", "key":"seris_roots", "value":1}]}
+        ]},
+        "s_grow":{"speaker":"Seris", "text":"Entonces seguiré siendo parte de algo que no necesito poseer.", "portrait":"seris", "expression":"hopeful", "next":"s_end"},
+        "s_open":{"speaker":"Seris", "text":"Aquí está. Pequeño, torpe y mío. Ya no tendrá que esconderse.", "portrait":"seris", "expression":"happy", "next":"s_end"},
+        "s_end":{"speaker":"Brom", "text":"Las mejores runas son las que el tiempo no consigue terminar.", "portrait":"brom", "expression":"happy", "next":""}
+      }
+    },
+    "road_valdoria_banter": {"kind":"travel_banter", "title":"Pan y profecías", "start":"r1", "nodes":{
+      "r1":{"speaker":"Brom", "text":"¿Todas las profecías de Celestia vienen sin indicaciones para encontrar una taberna?", "portrait":"brom", "expression":"annoyed", "movement":"brom_shrugs", "next":"r2"},
+      "r2":{"speaker":"Lyra", "text":"Las estrellas hablan de destinos, no de cenas.", "portrait":"lyra", "expression":"stern", "next":"r3"},
+      "r3":{"speaker":"Seris", "text":"La estrella roja lleva diez minutos señalando tu bolsa de pan.", "portrait":"seris", "expression":"happy", "next":"r4"},
+      "r4":{"speaker":"Aren", "text":"Misterio resuelto. Que conste en el archivo astral.", "portrait":"aren", "expression":"happy", "next":""}
+    }},
+    "road_forge_banter": {"kind":"travel_banter", "title":"El peso de un martillo", "start":"f1", "nodes":{
+      "f1":{"speaker":"Aren", "text":"Brom, ¿ese martillo no pesa demasiado para un viaje largo?", "portrait":"aren", "expression":"worried", "next":"f2"},
+      "f2":{"speaker":"Brom", "text":"Solo cuando alguien pregunta cuánto pesa.", "portrait":"brom", "expression":"stern", "next":"f3"},
+      "f3":{"speaker":"Lyra", "text":"He calculado el momento de torsión. La respuesta es: muchísimo.", "portrait":"lyra", "expression":"happy", "next":"f4"},
+      "f4":{"speaker":"Brom", "text":"Y ahora pesa más.", "portrait":"brom", "expression":"annoyed", "next":""}
+    }},
+    "road_forest_banter": {"kind":"travel_banter", "title":"El sendero correcto", "start":"t1", "nodes":{
+      "t1":{"speaker":"Seris", "text":"Nos hemos desviado.", "portrait":"seris", "expression":"stern", "next":"t2"},
+      "t2":{"speaker":"Aren", "text":"El mapa dice que el camino sigue recto.", "portrait":"aren", "expression":"worried", "next":"t3"},
+      "t3":{"speaker":"Seris", "text":"El camino no ha leído el mapa.", "portrait":"seris", "expression":"happy", "next":"t4"},
+      "t4":{"speaker":"Lyra", "text":"Anotaré la discrepancia para futuras ediciones.", "portrait":"lyra", "expression":"happy", "next":""}
+    }},
+    "inn_first_watch": {"kind":"rest_banter", "title":"Primera guardia", "start":"i1", "nodes":{
+      "i1":{"speaker":"Aren", "text":"Haré la primera guardia.", "portrait":"aren", "expression":"determined", "next":"i2"},
+      "i2":{"speaker":"Brom", "text":"La hiciste ayer. Y la noche anterior.", "portrait":"brom", "expression":"stern", "next":"i3"},
+      "i3":{"speaker":"Aren", "text":"Duermo mejor después de saber que todos estáis a salvo.", "portrait":"aren", "expression":"soft", "next":"i4"},
+      "i4":{"speaker":"Seris", "text":"Nosotros dormimos peor sabiendo que tú no. Esta noche vigilo yo.", "portrait":"seris", "expression":"soft", "next":""}
+    }},
+    "inn_old_songs": {"kind":"rest_banter", "title":"Canciones incompletas", "start":"o1", "nodes":{
+      "o1":{"speaker":"Lyra", "text":"Brom, esa canción termina siempre antes del último verso.", "portrait":"lyra", "expression":"worried", "next":"o2"},
+      "o2":{"speaker":"Brom", "text":"El último verso nombra a quienes la cantan. Aún no sé qué nombres poner.", "portrait":"brom", "expression":"sad", "next":"o3"},
+      "o3":{"speaker":"Seris", "text":"Prueba con cuatro viajeros y una corona que aprendió a escuchar.", "portrait":"seris", "expression":"hopeful", "next":"o4"},
+      "o4":{"speaker":"Brom", "text":"Demasiadas sílabas. Pero la idea sirve.", "portrait":"brom", "expression":"happy", "next":""}
+    }},
+    "council_aftermath": {"kind":"followup", "title":"Después del consejo", "start":"p1", "nodes":{
+      "p1":{"speaker":"Elara", "text":"La plaza sigue llena. Esperan saber si vuestra decisión resistirá el amanecer.", "portrait":"elara", "expression":"stern", "next":"p_truth"},
+      "p_truth":{"speaker":"Aren", "text":"Resistirá porque no ocultaremos su precio.", "portrait":"aren", "expression":"determined", "conditions":[{"key":"council_path", "equals":"truth"}], "else_next":"p_mercy", "next":"p_end"},
+      "p_mercy":{"speaker":"Seris", "text":"Resistirá porque no confundiremos justicia con prisa.", "portrait":"seris", "expression":"determined", "conditions":[{"key":"council_path", "equals":"mercy"}], "next":"p_end"},
+      "p_end":{"speaker":"Elara", "text":"Entonces salid ahí y repetidlo. Un juramento solo vive mientras alguien pueda oírlo.", "portrait":"elara", "expression":"hopeful", "camera":"pull_back", "movement":"doors_open", "next":""}
+    }}
+  }
+}
