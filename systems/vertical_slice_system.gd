@@ -9,10 +9,11 @@ const MILESTONES := [
 	{"id":"miniboss", "label":"Derrotar al Caballero Perjuro"},
 	{"id":"boss", "label":"Romper la Corona Hueca"},
 	{"id":"return", "label":"Regresar con la capitana"},
-	{"id":"eira", "label":"Descubrir las Ruinas de Eira"}
+	{"id":"decision", "label":"Elegir ante el Consejo Abierto"},
+	{"id":"eira", "label":"Completar las Ruinas de Eira"}
 ]
 
-static func completed_ids(phase3_state: Dictionary, dungeon_defeated: Array, dungeon_state: Dictionary) -> Array[String]:
+static func completed_ids(phase3_state: Dictionary, dungeon_defeated: Array, dungeon_state: Dictionary, narrative_state: Dictionary = {}) -> Array[String]:
 	var result: Array[String] = []
 	var main: Dictionary = phase3_state.get("main", {}) as Dictionary
 	var flags: Dictionary = phase3_state.get("flags", {}) as Dictionary
@@ -24,17 +25,18 @@ static func completed_ids(phase3_state: Dictionary, dungeon_defeated: Array, dun
 	if "miniboss" in dungeon_defeated: result.append("miniboss")
 	if "boss" in dungeon_defeated: result.append("boss")
 	if str(main.get("status", "available")) == "completed": result.append("return")
-	if str(dungeon_state.get("active_dungeon", "")) == "eira_ruins" or "eira_ruins" in (dungeon_state.get("completed_dungeons", []) as Array): result.append("eira")
+	if str((narrative_state.get("variables", {}) as Dictionary).get("council_path", "undecided")) in ["truth", "mercy"]: result.append("decision")
+	if "eira_ruins" in (dungeon_state.get("completed_dungeons", []) as Array): result.append("eira")
 	return result
 
-static func next_milestone(phase3_state: Dictionary, dungeon_defeated: Array, dungeon_state: Dictionary) -> Dictionary:
-	var completed := completed_ids(phase3_state, dungeon_defeated, dungeon_state)
+static func next_milestone(phase3_state: Dictionary, dungeon_defeated: Array, dungeon_state: Dictionary, narrative_state: Dictionary = {}) -> Dictionary:
+	var completed := completed_ids(phase3_state, dungeon_defeated, dungeon_state, narrative_state)
 	for milestone in MILESTONES:
 		if str(milestone["id"]) not in completed: return (milestone as Dictionary).duplicate(true)
 	return {"id":"complete", "label":"Vertical slice completada"}
 
-static func completion_percent(phase3_state: Dictionary, dungeon_defeated: Array, dungeon_state: Dictionary) -> float:
-	return float(completed_ids(phase3_state, dungeon_defeated, dungeon_state).size()) * 100.0 / float(MILESTONES.size())
+static func completion_percent(phase3_state: Dictionary, dungeon_defeated: Array, dungeon_state: Dictionary, narrative_state: Dictionary = {}) -> float:
+	return float(completed_ids(phase3_state, dungeon_defeated, dungeon_state, narrative_state).size()) * 100.0 / float(MILESTONES.size())
 
 static func boss_directive(phase: int, shield: int) -> String:
 	if shield <= 0: return "RUPTURA: concentra artes antes de que recomponga la corona."
