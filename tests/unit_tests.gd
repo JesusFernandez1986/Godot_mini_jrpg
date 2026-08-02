@@ -828,6 +828,12 @@ static func test_character_animation(suite: TestSuite) -> void:
 	suite.equal(str(VerticalSliceSystem.next_milestone(vertical_state, [], DungeonExplorationSystem.create_state())["id"]), "oath", "La demo dirige primero al juramento de Elara")
 	QuestSystem.accept_main(vertical_state)
 	suite.check(VerticalSliceSystem.completion_percent(vertical_state, [], DungeonExplorationSystem.create_state()) > 0.0, "Aceptar la misión actualiza el progreso visible de la demo")
+	var vertical_narrative := NarrativeSystem.new().create_state()
+	(vertical_narrative["variables"] as Dictionary)["council_path"] = "truth"
+	var completed_eira_state := DungeonExplorationSystem.create_state()
+	(completed_eira_state["completed_dungeons"] as Array).append("eira_ruins")
+	suite.check("decision" in VerticalSliceSystem.completed_ids(vertical_state, [], completed_eira_state, vertical_narrative), "La decisión del Consejo forma parte del alcance vertical")
+	suite.check("eira" in VerticalSliceSystem.completed_ids(vertical_state, [], completed_eira_state, vertical_narrative), "La demo exige completar Eira y no solo descubrirla")
 	suite.check("RUPTURA" in VerticalSliceSystem.boss_directive(2, 0), "El jefe comunica su ventana táctica de ruptura")
 	suite.check(WorldPresentationSystem.validate().is_empty(), "Profundidad y ciclos ambientales son coherentes")
 	suite.check(WorldPresentationSystem.depth_scale(450.0) > WorldPresentationSystem.depth_scale(120.0), "Los personajes cercanos se renderizan a mayor escala")

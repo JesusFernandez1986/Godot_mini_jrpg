@@ -33,6 +33,10 @@ game_menu -> settings | save_menu | load_menu | estado anterior
 
 Cada cambio genera una entrada estructurada de log y un fundido breve.
 
+## Vertical slice
+
+`VerticalSliceSystem` define la ruta de calidad Valdoria → Catacumbas → Consejo → Eira. El modo se registra dentro de las variables persistentes de `NarrativeSystem`, reutiliza los mismos sistemas de misión, combate, mazmorra y guardado que la campaña y solo se completa al finalizar las Ruinas de Eira. La opción aparece directamente en el título; la tecla `V` se conserva como atajo de desarrollo.
+
 ## Persistencia
 
 - Formato actual: versión 16.

@@ -16,7 +16,7 @@ const CITY_BRUMAFORJA: Texture2D = preload("res://assets/city_brumaforja.png")
 const CITY_CELESTIA: Texture2D = preload("res://assets/city_celestia.png")
 const CITY_SYLVARAN: Texture2D = preload("res://assets/city_sylvaran.png")
 
-const TITLE_OPTIONS := ["NUEVA PARTIDA", "CARGAR PARTIDA", "AJUSTES", "SALIR"]
+const TITLE_OPTIONS := ["DEMO VERTICAL", "NUEVA PARTIDA", "CARGAR PARTIDA", "AJUSTES", "SALIR"]
 const LANDMARK_ACTIONS := ["EXPLORAR EL LUGAR", "ACAMPAR HASTA EL AMANECER", "REGRESAR AL MAPA MUNDIAL"]
 const MENU_TABS := ["INVENTARIO", "EQUIPO", "PROGRESO", "GRUPO", "DIARIO", "EXTRAS", "SISTEMA"]
 const SETTINGS_ROWS := ["master_volume", "music_volume", "sfx_volume", "text_speed_index", "resolution_index", "window_mode", "control_scheme", "reset", "back"]
@@ -394,26 +394,39 @@ func handle_title_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_accept"):
 		match title_index:
 			0:
-				new_game()
+				start_vertical_slice_demo()
 			1:
-				open_load_menu("title")
+				new_game()
 			2:
-				open_settings("title")
+				open_load_menu("title")
 			3:
+				open_settings("title")
+			4:
 				get_tree().quit()
 
 func start_vertical_slice_demo() -> void:
 	new_game()
+	(narrative_state["variables"] as Dictionary)["vertical_slice_active"] = true
+	(narrative_state["variables"] as Dictionary)["vertical_slice_complete"] = false
 	chapter = 5
-	unlocked_locations = ["valdoria", "brumaforja", "celestia", "sylvaran", "sanctuary", "eira_ruins"]
+	unlocked_locations = ["valdoria"]
 	for index in mini(4, party.size()):
 		(party[index] as Dictionary)["joined"] = true
 		(party[index] as Dictionary)["active"] = true
-	QuestSystem.accept_main(phase3_state)
 	current_city = "valdoria"
 	current_location = "valdoria"
-	enter_valdoria_exploration()
-	show_notification("DEMO VERTICAL · Habla con habitantes, abre las catacumbas y sigue los hitos.")
+	current_landmark = ""
+	if sanctuary_controller != null:
+		sanctuary_controller.configure_world("valdoria")
+		sanctuary_controller.set_player_position(valdoria_position)
+		sanctuary_controller.facing_direction = facing_direction
+	hero_position = valdoria_position
+	camera_system.snap(hero_position)
+	start_dialogue(Phase3StoryData.VERTICAL_SLICE_INTRO, "valdoria_explore", "vertical_slice_intro", "valdoria")
+	show_notification("DEMO VERTICAL · Un juramento, una ciudad y las Ruinas de Eira.")
+
+func is_vertical_slice_active() -> bool:
+	return bool((narrative_state.get("variables", {}) as Dictionary).get("vertical_slice_active", false))
 
 func open_settings(return_state: String) -> void:
 	settings_return_state = return_state
@@ -637,7 +650,10 @@ func resolve_dungeon_interaction(result: Dictionary) -> void:
 			gold += 120
 			add_item("Fragmento prismático", "Núcleo cartográfico recuperado al completar una mazmorra.", 1)
 			DungeonExplorationSystem.leave(dungeon_exploration_state)
-			game_state = "landmark"
+			if current_dungeon == "eira_ruins" and is_vertical_slice_active():
+				start_dialogue(Phase3StoryData.VERTICAL_SLICE_ENDING, "victory", "vertical_slice_complete", "dungeon")
+			else:
+				game_state = "landmark"
 	autosave()
 
 func handle_battle_input(event: InputEvent) -> void:
@@ -1029,7 +1045,16 @@ func complete_directed_scene() -> void:
 	dialogue_system.lines = []
 	dialogue_system.index = 0
 	if directed_completion == "phase6_council":
-		show_notification("El Consejo Abierto recordará tu decisión.")
+		if is_vertical_slice_active():
+			unlock_location("eira_ruins")
+			WorldExplorationSystem.discover(world_exploration_state, "eira_ruins")
+			current_location = "eira_ruins"
+			current_landmark = "eira_ruins"
+			landmark_action_index = 0
+			game_state = "landmark"
+			show_notification("La decisión del Consejo revela el camino a Eira. Explora las ruinas.")
+		else:
+			show_notification("El Consejo Abierto recordará tu decisión.")
 	elif completed_scene.begins_with("road_") or completed_scene.begins_with("inn_"):
 		show_notification("Conversación de viaje registrada en la crónica.")
 	else:
@@ -1058,6 +1083,8 @@ func finish_dialogue() -> void:
 		unlock_location("valdoria")
 		current_location = "valdoria"
 		map_index = 0
+	elif completion == "vertical_slice_intro":
+		enter_valdoria_exploration()
 	elif completion.begins_with("story_"):
 		complete_city_chapter(completion.trim_prefix("story_"))
 	elif completion == "finale":
@@ -1074,6 +1101,11 @@ func finish_dialogue() -> void:
 		show_notification("Fase 3 completada: El León Despierto.")
 		autosave()
 		start_directed_scene("council_of_memory", "valdoria_explore", "phase6_council", "valdoria")
+	elif completion == "vertical_slice_complete":
+		(narrative_state["variables"] as Dictionary)["vertical_slice_complete"] = true
+		game_state = "victory"
+		show_notification("Demo vertical completada.")
+		autosave()
 	elif completion.begins_with("hero_chapter:"):
 		var chapter_id := completion.trim_prefix("hero_chapter:")
 		var story_outcome := str((narrative_state.get("variables", {}) as Dictionary).get("council_path", "truth"))
@@ -2276,17 +2308,17 @@ func draw_title() -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(330, 158), "LA CORONA HUECA", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("f5d88f"))
 	draw_character(PARTY_SHEET, 0, Vector2(220, 450), Vector2(190, 286), "idle")
 	draw_character(PARTY_SHEET, 1, Vector2(740, 450), Vector2(190, 286), "idle")
-	draw_rect(Rect2(325, 210, 310, 220), Color("06101ade"), true)
-	draw_rect(Rect2(325, 210, 310, 220), Color("cdbb78"), false, 2)
+	draw_rect(Rect2(325, 194, 310, 250), Color("06101ade"), true)
+	draw_rect(Rect2(325, 194, 310, 250), Color("cdbb78"), false, 2)
 	for i in TITLE_OPTIONS.size():
 		var selected := i == title_index
 		var color := Color("ffe5a3") if selected else Color("c4d1dc")
-		if i == 1 and not has_any_save():
+		if i == 2 and not has_any_save():
 			color = Color("66717d")
 		var prefix := "◆ " if selected else "  "
-		draw_string(ThemeDB.fallback_font, Vector2(372, 253 + i * 46), prefix + TITLE_OPTIONS[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, color)
-	draw_string(ThemeDB.fallback_font, Vector2(330, 458), "%d diálogos · 8 héroes · 3 ranuras · autoguardado" % (StoryData.dialogue_count() + Phase3StoryData.dialogue_count() + hero_story_system.dialogue_count()), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("a8c4d2"))
-	draw_string(ThemeDB.fallback_font, Vector2(330, 481), "V · INICIAR DEMO VERTICAL VALDORIA/EIRA", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("9ee8d1"))
+		draw_string(ThemeDB.fallback_font, Vector2(360, 230 + i * 40), prefix + TITLE_OPTIONS[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
+	draw_string(ThemeDB.fallback_font, Vector2(330, 468), "%d diálogos · 8 héroes · 3 ranuras · autoguardado" % (StoryData.dialogue_count() + Phase3StoryData.dialogue_count() + hero_story_system.dialogue_count()), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("a8c4d2"))
+	draw_string(ThemeDB.fallback_font, Vector2(330, 490), "VERTICAL SLICE · VALDORIA / CATACUMBAS / EIRA", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("9ee8d1"))
 
 func has_any_save() -> bool:
 	return SaveSystem.has_autosave(save_base_dir) or SaveSystem.has_slot(1, save_base_dir) or SaveSystem.has_slot(2, save_base_dir) or SaveSystem.has_slot(3, save_base_dir)
@@ -2683,8 +2715,8 @@ func draw_exploration_hud(title: String, objective: String) -> void:
 	draw_vertical_slice_tracker()
 
 func draw_vertical_slice_tracker() -> void:
-	var next := VerticalSliceSystem.next_milestone(phase3_state, dungeon_defeated, dungeon_exploration_state)
-	var completion := VerticalSliceSystem.completion_percent(phase3_state, dungeon_defeated, dungeon_exploration_state)
+	var next := VerticalSliceSystem.next_milestone(phase3_state, dungeon_defeated, dungeon_exploration_state, narrative_state)
+	var completion := VerticalSliceSystem.completion_percent(phase3_state, dungeon_defeated, dungeon_exploration_state, narrative_state)
 	draw_rect(Rect2(650, 104, 290, 48), Color("06101ad9"), true)
 	draw_string(ThemeDB.fallback_font, Vector2(664, 122), "RUTA VERTICAL %.0f%%" % completion, HORIZONTAL_ALIGNMENT_LEFT, 260, 11, Color("9ee8d1"))
 	draw_string(ThemeDB.fallback_font, Vector2(664, 142), str(next.get("label", "Vertical slice completada")), HORIZONTAL_ALIGNMENT_LEFT, 260, 11, Color.WHITE)
@@ -3102,8 +3134,10 @@ func draw_victory() -> void:
 		draw_character(PARTY_SHEET, i, Vector2(300 + column * 120, 350 + row * 115), Vector2(78, 117), "celebrate")
 	draw_rect(Rect2(170, 92, 620, 190), Color("07101af2"), true)
 	draw_rect(Rect2(170, 92, 620, 190), Color("74e9ff"), false, 3)
-	draw_string(ThemeDB.fallback_font, Vector2(295, 150), "EL JURAMENTO RESTAURADO", HORIZONTAL_ALIGNMENT_LEFT, -1, 29, Color("baf6ff"))
-	draw_wrapped_text("Eryndor conserva sus recuerdos. La corona deja de pertenecer a un rey y vuelve a ser la promesa de todos sus pueblos.", Vector2(228, 194), 66, 23.0, 17, Color.WHITE)
+	var vertical_complete := bool((narrative_state.get("variables", {}) as Dictionary).get("vertical_slice_complete", false))
+	draw_string(ThemeDB.fallback_font, Vector2(250 if vertical_complete else 295, 150), "DEMO VERTICAL COMPLETADA" if vertical_complete else "EL JURAMENTO RESTAURADO", HORIZONTAL_ALIGNMENT_LEFT, -1, 29, Color("baf6ff"))
+	var victory_text := "Valdoria recuerda sus nombres y Eira vuelve a escuchar. El camino hacia la Corona Hueca queda abierto." if vertical_complete else "Eryndor conserva sus recuerdos. La corona deja de pertenecer a un rey y vuelve a ser la promesa de todos sus pueblos."
+	draw_wrapped_text(victory_text, Vector2(228, 194), 66, 23.0, 17, Color.WHITE)
 	draw_string(ThemeDB.fallback_font, Vector2(343, 264), "Pulsa ENTER para volver al título", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("ffe5a3"))
 
 func draw_notification() -> void:

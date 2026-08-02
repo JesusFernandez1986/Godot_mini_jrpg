@@ -15,10 +15,12 @@ const NPCS := [
 ]
 
 const DUNGEON_INTRO := [["Lyra","Aquí abajo la luz no proyecta sombras: proyecta recuerdos."],["Aren","Manteneos cerca. Activaremos los sellos y volveremos juntos."],["Voz bajo la piedra","Juntos... la palabra favorita de quienes aún no han sido puestos a prueba."]]
+const VERTICAL_SLICE_INTRO := [["Narrador","Una campana sin badajo sonó bajo Valdoria tres noches seguidas."],["Elara","Aren, la ciudad necesita un juramento elegido, no otra orden obedecida."],["Aren","Entonces bajaré a escuchar qué nombre intenta volver a la superficie."],["Lyra","Y cuando regresemos, el Consejo decidirá qué hacer con la verdad."]]
 const MINIBOSS_INTRO := [["Caballero Perjuro","Custodié una corona cuando la ciudad olvidó a su rey. ¿Qué custodias tú, muchacho?"],["Aren","A quienes nunca tendrán corona, pero sí un nombre."],["Caballero Perjuro","Entonces mide tu promesa contra mi espada."]]
 const BOSS_INTRO := [["León Hueco","Valdoria construyó sus hogares sobre mi tumba y llamó paz a mi silencio."],["Lyra","Vharos te presta voz para convertir una herida en hambre."],["Aren","No vengo a borrar tu dolor. Vengo a impedir que lo hereden los vivos."],["León Hueco","Demuestra que una ciudad merece recordar."]]
 const RETURN_LINES := [["Elara","Las campanas han callado. Pero esta vez la plaza recuerda por qué sonaban."],["Aren","El León no pedía un rey. Pedía que Valdoria reconociera a quienes enterró sin nombre."],["Oren","El registro contiene trescientos doce nombres borrados de la piedra."],["Mara","Entonces los leeremos todos. Uno por uno."],["Lyra","Así se vence a Vharos: no destruyendo el pasado, sino devolviéndole voz."],["Elara","Aren, acepta el Emblema del León Despierto. No es una medalla: es una deuda que elegimos compartir."]]
 const CLOSING_LINES := [["Narrador","Al amanecer, trescientas doce campanadas cruzaron Valdoria."],["Narrador","En cada puerta ardió una lámpara. En cada mesa quedó un lugar vacío para quienes levantaron la ciudad y fueron olvidados."],["Aren","Una victoria no cierra una historia. Solo decide quién tendrá derecho a contar el siguiente capítulo."],["Lyra","Y esta vez no lo escribirá un rey a solas."],["Narrador","Bajo la plaza, el león de piedra cerró los ojos. No para dormir, sino para escuchar."]]
+const VERTICAL_SLICE_ENDING := [["Narrador","En la cámara más profunda de Eira, la decisión del Consejo encontró una respuesta."],["Eira","La memoria no pide una corona. Pide testigos capaces de elegir de nuevo."],["Aren","Valdoria recordará sus nombres. Y nosotros seguiremos el rastro de quienes intentaron borrarlos."],["Narrador","La primera ruta de la Corona Hueca quedó abierta bajo la luz del amanecer."]]
 
 static func npc_by_interaction(interaction_id: String) -> Dictionary:
 	var npc_id := interaction_id.trim_prefix("npc_")
@@ -28,7 +30,7 @@ static func npc_by_interaction(interaction_id: String) -> Dictionary:
 	return {}
 
 static func dialogue_count() -> int:
-	var total := DUNGEON_INTRO.size() + MINIBOSS_INTRO.size() + BOSS_INTRO.size() + RETURN_LINES.size() + CLOSING_LINES.size()
+	var total := DUNGEON_INTRO.size() + VERTICAL_SLICE_INTRO.size() + MINIBOSS_INTRO.size() + BOSS_INTRO.size() + RETURN_LINES.size() + CLOSING_LINES.size() + VERTICAL_SLICE_ENDING.size()
 	for npc in NPCS:
 		total += (npc["lines"] as Array).size()
 	return total

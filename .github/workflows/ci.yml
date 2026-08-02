@@ -1,0 +1,76 @@
+name: Godot CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: godot-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.1
+
+jobs:
+  test:
+    name: Import project and run tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Restore Godot import cache
+        uses: actions/cache@v4
+        with:
+          path: .godot/imported
+          key: godot-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('project.godot', 'assets/**') }}
+          restore-keys: |
+            godot-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+
+      - name: Install Godot
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          install_dir="${RUNNER_TEMP}/godot-${GODOT_VERSION}"
+          mkdir -p "${install_dir}"
+          curl --fail --location --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${archive}" \
+            --output "${RUNNER_TEMP}/${archive}"
+          unzip -q "${RUNNER_TEMP}/${archive}" -d "${install_dir}"
+          mv "${install_dir}/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "${install_dir}/godot"
+          chmod +x "${install_dir}/godot"
+          echo "${install_dir}" >> "${GITHUB_PATH}"
+
+      - name: Show Godot version
+        run: godot --version
+
+      - name: Import project resources
+        run: godot --headless --rendering-method gl_compatibility --rendering-driver opengl3 --path . --import
+
+      - name: Run unit and integration tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --log-file "${RUNNER_TEMP}/godot-runtime.log" \
+            --rendering-method gl_compatibility --rendering-driver opengl3 --path . \
+            --script res://tests/test_runner.gd 2>&1 | tee godot-tests.log
+
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-test-log
+          path: |
+            godot-tests.log
+            ${{ runner.temp }}/godot-runtime.log
+          if-no-files-found: ignore
+          retention-days: 7

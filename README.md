@@ -1,5 +1,7 @@
 # Crónicas del Cristal: La Corona Hueca
 
+[![Godot CI](https://github.com/JesusFernandez1986/Godot_mini_jrpg/actions/workflows/ci.yml/badge.svg)](https://github.com/JesusFernandez1986/Godot_mini_jrpg/actions/workflows/ci.yml)
+
 JRPG HD-2D hecho con Godot 4. Incluye menú principal, guardado/carga, mundo explorable con clima y ciclo horario, cuatro ciudades vivas, seis mazmorras multinivel, ocho protagonistas, más de 530 intervenciones narrativas, inventario, equipo, árboles de talentos, trabajos, códice, decisiones persistentes y combate táctico con formación activa de cuatro personajes.
 
 ## Ejecutar
@@ -149,6 +151,10 @@ En una localización especial elige **Explorar el lugar**. Usa **WASD/flechas** 
 - Base de localización español/inglés, créditos y auditoría de integridad de lanzamiento.
 - Nueva pestaña **Menú → Extras** para bestiario, mercado, facciones, arena, dificultad, accesibilidad e idioma.
 
+## Vertical slice prioritario
+
+La opción **Demo vertical** del título inicia una ruta autocontenida por Valdoria, las Catacumbas del León y las Ruinas de Eira. Incluye prólogo propio, juramento elegido por el jugador, objetivos de ciudad, combates, minijefe, jefe por fases, decisión ante el Consejo Abierto y cierre exclusivo al completar Eira. Esta ruta es la referencia de calidad antes de ampliar el resto de la campaña.
+
 ## Fases 16–21 · Pase de calidad jugable
 
 - Perfiles de animación propios para ocho protagonistas, diseños diferenciados para Naia, Kael, Mira y Orin, poses de anticipación/impacto y partículas de interacción.
@@ -174,6 +180,8 @@ En una localización especial elige **Explorar el lugar**. Usa **WASD/flechas** 
 ```
 
 La suite ejecuta más de 1.180 comprobaciones unitarias y de integración sobre datos, misiones, 18 plantas de mazmorra, ocho capacidades de exploración, 32 capítulos personales, bestiario, mercados, facciones, arena, logros, todas las animaciones, rutas, horarios, clima, presentación de combate, decisiones, navegación A*, guardado/carga v1–v16, Nueva Partida + y campaña completa. Además simula 2.500 batallas deterministas, 1.200 combinaciones de equipo y 6.000 pasos de estrés sobre el mapa mundial.
+
+GitHub Actions ejecuta la misma suite al hacer `push` a `main`, al abrir o actualizar un pull request y bajo demanda desde **Actions → Godot CI → Run workflow**. También puede lanzarse desde una terminal autenticada con `gh workflow run ci.yml`.
 
 ## Movimiento y animación
 

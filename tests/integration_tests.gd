@@ -39,6 +39,15 @@ static func run(suite: TestSuite, tree: SceneTree) -> void:
 	await frame(tree, scene)
 	suite.equal(scene.game_state, "load_menu", "La pantalla de carga se dibuja")
 	scene.game_state = "title"
+	scene.start_vertical_slice_demo()
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "dialogue", "La demo vertical comienza con un prólogo propio")
+	suite.check(scene.is_vertical_slice_active(), "La demo conserva su alcance dentro del estado narrativo guardable")
+	suite.equal(str((scene.phase3_state["main"] as Dictionary)["status"]), "available", "El prólogo no acepta automáticamente el juramento del jugador")
+	scene.finish_dialogue()
+	await frame(tree, scene)
+	suite.equal(scene.game_state, "valdoria_explore", "El prólogo de la demo entrega el control en Valdoria")
+	scene.game_state = "title"
 	scene.new_game()
 	await frame(tree, scene)
 	suite.equal(scene.game_state, "dialogue", "Nueva partida abre el prólogo")
