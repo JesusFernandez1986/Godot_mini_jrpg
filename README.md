@@ -4,6 +4,8 @@
 
 JRPG HD-2D hecho con Godot 4. Incluye menú principal, guardado/carga, mundo explorable con clima y ciclo horario, cuatro ciudades vivas, seis mazmorras multinivel, ocho protagonistas, más de 530 intervenciones narrativas, inventario, equipo, árboles de talentos, trabajos, códice, decisiones persistentes y combate táctico con formación activa de cuatro personajes.
 
+Documentación técnica de referencia: [documentación oficial de Godot 4.x en español](https://docs.godotengine.org/es/4.x/).
+
 ## Ejecutar
 
 1. Abre `project.godot` desde Godot.
@@ -20,6 +22,7 @@ JRPG HD-2D hecho con Godot 4. Incluye menú principal, guardado/carga, mundo exp
 - En combate, **↑/↓** elige una orden, **←/→** cambia el objetivo y **Enter** confirma.
 - En una decisión narrativa, **↑/↓** elige una respuesta y **Enter** la confirma.
 - Los atajos **1–8** ejecutan: atacar, arte, curar, defender, objeto, cambiar iniciativa, ataque combinado y huir.
+- **Mando:** stick o cruceta para mover/navegar, **A** para confirmar/interactuar, **B** para cancelar, **Start** para el menú y **LB** para correr.
 
 La partida se guarda automáticamente al completar capítulos y también puede guardarse manualmente desde **Menú → Sistema**.
 
@@ -113,7 +116,7 @@ En una localización especial elige **Explorar el lugar**. Usa **WASD/flechas** 
 - Un capítulo final común enfrenta a la Corona Hueca y genera ocho epílogos variables según las decisiones y vínculos conservados.
 - **Menú → Grupo** permite alternar entre miembros activos y reserva, con un máximo de cuatro combatientes.
 - **Menú → Diario** muestra los 32 capítulos, conversaciones cruzadas y final común con su estado de desbloqueo.
-- Los nuevos retratos pixel-art se encuentran en `assets/phase10_party.png`; el atlas de movimiento conserva todas las secuencias de caminar, correr, hablar, atacar, defender, sufrir daño, usar objetos, interactuar y celebrar.
+- Los retratos pixel-art están en `assets/phase10_party.png`; Naia, Kael, Mira y Orin tienen además tiras de campo frontal y posterior propias en `assets/phase10_field_party*.png`, con animación, orientación y efectos sin recolorear a los cuatro héroes originales.
 
 ## Fase 11 · Bestiario y ecosistema de enemigos
 
@@ -170,6 +173,12 @@ La opción **Demo vertical** del título inicia una ruta autocontenida por Valdo
 - Ajustes persistentes de audio, ventana, velocidad de texto y controles.
 - Datos de personajes, objetos, enemigos, lugares y misiones en recursos editables.
 - Sistemas independientes para inventario, progresión, diálogo, viaje y combate.
+- Escenas UI independientes para título, victoria y seguimiento de la demo vertical.
+- HUD de diálogo y combate extraídos a escenas `Control`, con tema visual compartido y actualización desde datos.
+- Escenario HD-2D por capas para Valdoria, Catacumbas y Eira, con gradación, luz, niebla, partículas, viñeta y primer plano temático.
+- Director de audio con buses `Music`, `Ambience`, `SFX` y `UI`, transiciones contextuales y señales para interfaz, interacción, impacto, curación y guardado.
+- Perfil de entrada centralizado en `InputMap` para teclado y mando, sin teclas físicas dispersas en el orquestador.
+- Presupuesto medible de 60 FPS, P95 de 20 ms, nodos, draw calls, objetos y memoria de texturas; smoke test de 960×540 a 1920×1080.
 - Suite automatizada unitaria y de integración.
 - Escalado 16:9 explícito para que el juego llene tanto una ventana normal como el modo incrustado del editor.
 
@@ -179,13 +188,15 @@ La opción **Demo vertical** del título inicia una ruta autocontenida por Valdo
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . --script res://tests/test_runner.gd
 ```
 
-La suite ejecuta más de 1.180 comprobaciones unitarias y de integración sobre datos, misiones, 18 plantas de mazmorra, ocho capacidades de exploración, 32 capítulos personales, bestiario, mercados, facciones, arena, logros, todas las animaciones, rutas, horarios, clima, presentación de combate, decisiones, navegación A*, guardado/carga v1–v16, Nueva Partida + y campaña completa. Además simula 2.500 batallas deterministas, 1.200 combinaciones de equipo y 6.000 pasos de estrés sobre el mapa mundial.
+La suite ejecuta más de 1.180 comprobaciones unitarias y de integración sobre datos, misiones, 18 plantas de mazmorra, ocho capacidades de exploración, 32 capítulos personales, bestiario, mercados, facciones, arena, logros, audio, entrada de mando, presupuestos de rendimiento, HUD, todas las animaciones, rutas, horarios, clima, presentación de combate, decisiones, navegación A*, guardado/carga v1–v16, Nueva Partida + y campaña completa. Además simula 2.500 batallas deterministas, 1.200 combinaciones de equipo y 6.000 pasos de estrés sobre el mapa mundial.
 
-GitHub Actions ejecuta la misma suite al hacer `push` a `main`, al abrir o actualizar un pull request y bajo demanda desde **Actions → Godot CI → Run workflow**. También puede lanzarse desde una terminal autenticada con `gh workflow run ci.yml`.
+La revisión visual completa usa `tests/visual_regression_capture.gd`. `tests/resolution_smoke_test.gd` genera capturas reales en las cuatro resoluciones compatibles y verifica que se conserva la base 16:9.
+
+GitHub Actions ejecuta la misma suite al hacer `push` a `main`, al abrir o actualizar un pull request y bajo demanda desde **Actions → Godot CI → Run workflow**. El workflow usa acciones basadas en Node.js 24 y también puede lanzarse desde una terminal autenticada con `gh workflow run ci.yml`.
 
 ## Movimiento y animación
 
-- Atlas frame a frame para los ocho protagonistas, con ocho orientaciones y paletas diferenciadas; retratos HD pixel-art propios para el segundo grupo.
+- Atlas frame a frame direccional para Aren, Lyra, Brom y Seris; Naia, Kael, Mira y Orin usan siluetas de campo frontal/posterior propias y perfiles procedurales diferenciados.
 - Secuencias de reposo, caminar, correr, hablar, atacar, defender, recibir daño, caer, usar objetos e interactuar.
 - Exploración física mediante `CharacterBody2D`, `TileMapLayer`, obstáculos sólidos, `NavigationAgent2D` y rutas A*.
 - Cámara suave con zoom contextual, escala por profundidad, sombras dinámicas y oclusión tras el escenario.

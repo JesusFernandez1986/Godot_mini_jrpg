@@ -5,6 +5,8 @@ const HERO_SPEED := 215.0
 const PARTY_SHEET: Texture2D = preload("res://assets/party_characters.png")
 const PARTY_ANIMATION_ATLAS: Texture2D = preload("res://assets/party_animation_atlas_v2.png")
 const PHASE10_PARTY: Texture2D = preload("res://assets/phase10_party.png")
+const PHASE10_FIELD_PARTY: Texture2D = preload("res://assets/phase10_field_party.png")
+const PHASE10_FIELD_PARTY_BACK: Texture2D = preload("res://assets/phase10_field_party_back.png")
 const ELEMENTAL_VFX: Texture2D = preload("res://assets/vfx_elements_v2.png")
 const ENEMY_SHEET: Texture2D = preload("res://assets/characters.png")
 const PHASE3_ENEMY_SHEET: Texture2D = preload("res://assets/phase3_enemies.png")
@@ -15,6 +17,8 @@ const CITY_VALDORIA: Texture2D = preload("res://assets/city_valdoria.png")
 const CITY_BRUMAFORJA: Texture2D = preload("res://assets/city_brumaforja.png")
 const CITY_CELESTIA: Texture2D = preload("res://assets/city_celestia.png")
 const CITY_SYLVARAN: Texture2D = preload("res://assets/city_sylvaran.png")
+const HD2D_STAGE_SCENE: PackedScene = preload("res://world/hd2d_stage.tscn")
+const AUDIO_DIRECTOR_SCRIPT: Script = preload("res://audio/audio_director.gd")
 
 const TITLE_OPTIONS := ["DEMO VERTICAL", "NUEVA PARTIDA", "CARGAR PARTIDA", "AJUSTES", "SALIR"]
 const LANDMARK_ACTIONS := ["EXPLORAR EL LUGAR", "ACAMPAR HASTA EL AMANECER", "REGRESAR AL MAPA MUNDIAL"]
@@ -44,7 +48,15 @@ var narrative_system := NarrativeSystem.new()
 var hero_story_system := HeroStorySystem.new()
 var city_life_system := CityLifeSystem.new()
 var camera_system := CameraSystem.new()
+var hd2d_stage: Node
+var audio_director: Node
+var performance_budget: PerformanceBudgetSystem
 var sanctuary_controller: SanctuaryController
+@onready var title_screen: Node = $TitleScreen
+@onready var victory_screen: Node = $VictoryScreen
+@onready var vertical_slice_hud: Node = $VerticalSliceHUD
+@onready var dialogue_hud: Node = $DialogueHUD
+@onready var battle_hud: Node = $BattleHUD
 var locations: Array = []
 var save_base_dir := SaveSystem.SAVE_DIR
 var menu_return_state := "world_map"
@@ -133,9 +145,6 @@ var directed_completion := ""
 var directed_backdrop := "world"
 var directed_scene_elapsed := 0.0
 var directed_music_cue := ""
-var narrative_music_player: AudioStreamPlayer
-var narrative_music_playback: AudioStreamGeneratorPlayback
-var narrative_music_phase := 0.0
 var extras_bestiary_index := 0
 var extras_market_index := 0
 var pending_superboss_id := ""
@@ -166,6 +175,10 @@ const DUNGEON_ENCOUNTERS := [
 func _ready() -> void:
 	configure_viewport_scaling()
 	rng.randomize()
+	title_screen.option_activated.connect(_on_title_option_activated)
+	hd2d_stage = HD2D_STAGE_SCENE.instantiate()
+	add_child(hd2d_stage)
+	hd2d_stage.deactivate()
 	sanctuary_controller = SanctuaryController.new()
 	sanctuary_controller.name = "SanctuaryController"
 	add_child(sanctuary_controller)
@@ -174,7 +187,13 @@ func _ready() -> void:
 	camera_system.snap(hero_position)
 	locations = WorldExplorationSystem.all_locations(GameDatabase.locations())
 	settings_manager.load_settings()
-	setup_narrative_music()
+	audio_director = AUDIO_DIRECTOR_SCRIPT.new()
+	audio_director.name = "AudioDirector"
+	add_child(audio_director)
+	audio_director.sync_context(game_state, current_city, current_dungeon)
+	performance_budget = PerformanceBudgetSystem.new()
+	performance_budget.name = "PerformanceBudget"
+	add_child(performance_budget)
 	initialize_empty_game()
 	var database_errors := GameDatabase.validate()
 	database_errors.append_array(DungeonExplorationSystem.validate_definitions())
@@ -186,6 +205,7 @@ func _ready() -> void:
 	if not database_errors.is_empty():
 		GameLogger.error("database", "Game database validation failed", {"errors": database_errors})
 	GameLogger.info("startup", "Game initialized", {"dialogues": StoryData.dialogue_count() + hero_story_system.dialogue_count(), "locations": locations.size(), "heroes":party.size(), "dungeons":DungeonExplorationSystem.DUNGEONS.size()})
+	update_screen_scenes()
 	queue_redraw()
 
 func configure_viewport_scaling() -> void:
@@ -193,39 +213,6 @@ func configure_viewport_scaling() -> void:
 	root_window.content_scale_size = Vector2i(int(WORLD.size.x), int(WORLD.size.y))
 	root_window.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root_window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
-
-func setup_narrative_music() -> void:
-	if DisplayServer.get_name() == "headless": return
-	narrative_music_player = AudioStreamPlayer.new()
-	narrative_music_player.name = "NarrativeMusic"
-	var generator := AudioStreamGenerator.new()
-	generator.mix_rate = 22050.0
-	generator.buffer_length = 0.35
-	narrative_music_player.stream = generator
-	narrative_music_player.volume_db = -22.0
-	add_child(narrative_music_player)
-	narrative_music_player.play()
-	narrative_music_playback = narrative_music_player.get_stream_playback() as AudioStreamGeneratorPlayback
-
-func _exit_tree() -> void:
-	narrative_music_playback = null
-	if narrative_music_player != null:
-		narrative_music_player.stop()
-		narrative_music_player.stream = null
-
-func update_narrative_music() -> void:
-	if narrative_music_playback == null: return
-	var city_cue := str(city_life_system.city(current_city).get("music", "")) if game_state == "city" else ""
-	var active_cue := directed_music_cue if not directed_music_cue.is_empty() else city_cue
-	var frequency := {"council":146.83, "forge_bell":110.0, "himno_del_leon":164.81, "martillos_de_ceniza":110.0, "mareas_de_cristal":196.0, "nombres_bajo_las_hojas":130.81}.get(active_cue, 130.81) as float
-	var audible := (not active_directed_scene.is_empty() and not directed_music_cue.is_empty()) or (game_state == "city" and not city_cue.is_empty())
-	var frames := mini(narrative_music_playback.get_frames_available(), 1024)
-	for frame_index in frames:
-		var sample := 0.0
-		if audible:
-			sample = (sin(narrative_music_phase) + sin(narrative_music_phase * 1.5) * 0.32) * 0.055
-		narrative_music_playback.push_frame(Vector2(sample, sample))
-		narrative_music_phase = fmod(narrative_music_phase + TAU * frequency / 22050.0, TAU)
 
 func initialize_empty_game() -> void:
 	party = GameDatabase.create_party()
@@ -294,6 +281,7 @@ func new_game() -> void:
 	start_dialogue(StoryData.get_story_lines(0), "world_map", "intro", "sanctuary")
 
 func _process(delta: float) -> void:
+	performance_budget.record_frame(delta)
 	var reduced_motion := bool((completion_state.get("accessibility", {}) as Dictionary).get("reduced_motion", false))
 	battle_hit_stop = maxf(0.0, battle_hit_stop - delta)
 	if battle_impact_time < battle_impact_duration:
@@ -305,7 +293,8 @@ func _process(delta: float) -> void:
 		sanctuary_controller.update_animation(delta)
 	if not reduced_motion: npc_animation_elapsed += delta
 	if not active_directed_scene.is_empty(): directed_scene_elapsed += delta
-	update_narrative_music()
+	var city_music_cue := str(city_life_system.city(current_city).get("music", "")) if game_state == "city" else ""
+	audio_director.sync_context(game_state, current_city, current_dungeon, directed_music_cue, city_music_cue)
 	if game_state == "dialogue":
 		dialogue_system.update(delta, settings_manager.text_characters_per_second())
 	if game_state != "title":
@@ -337,9 +326,80 @@ func _process(delta: float) -> void:
 	if game_state in ["explore", "valdoria_explore", "dungeon"]:
 		process_world_movement(delta)
 		camera_system.update(delta, hero_position, is_running, not sanctuary_controller.nearest_interaction().is_empty())
+	update_hd2d_stage(reduced_motion)
+	update_screen_scenes()
 	queue_redraw()
 
+func update_screen_scenes() -> void:
+	title_screen.visible = game_state == "title"
+	if title_screen.visible:
+		title_screen.configure(TITLE_OPTIONS, title_index, has_any_save(), StoryData.dialogue_count() + Phase3StoryData.dialogue_count() + hero_story_system.dialogue_count())
+	victory_screen.visible = game_state == "victory"
+	if victory_screen.visible:
+		victory_screen.configure(bool((narrative_state.get("variables", {}) as Dictionary).get("vertical_slice_complete", false)))
+	vertical_slice_hud.visible = game_state in ["valdoria_explore", "dungeon"]
+	if vertical_slice_hud.visible:
+		var title := "VALDORIA · PLAZA DEL LEÓN" if game_state == "valdoria_explore" else "CATACUMBAS DEL LEÓN DORMIDO"
+		var nearby := sanctuary_controller.nearest_interaction()
+		var interaction := interaction_label(nearby) if not nearby.is_empty() and action_duration <= 0.0 else ""
+		var next := VerticalSliceSystem.next_milestone(phase3_state, dungeon_defeated, dungeon_exploration_state, narrative_state)
+		var completion := VerticalSliceSystem.completion_percent(phase3_state, dungeon_defeated, dungeon_exploration_state, narrative_state)
+		vertical_slice_hud.configure(title, QuestSystem.objective(phase3_state), interaction, notification, completion, str(next.get("label", "Vertical slice completada")))
+	dialogue_hud.visible = game_state == "dialogue" and not dialogue_system.lines.is_empty()
+	if dialogue_hud.visible:
+		var metadata := dialogue_system.current_metadata()
+		var choices := narrative_system.current_choices(narrative_state) if not active_directed_scene.is_empty() else []
+		var choice_labels: Array = []
+		for choice in choices:
+			choice_labels.append(str((choice as Dictionary).get("text", "")) + "  " + NarrativeDirectionSystem.choice_hint(choice as Dictionary))
+		var line := dialogue_system.current_pair()
+		dialogue_hud.configure(str(line[0]), dialogue_system.visible_text(), str(metadata.get("expression", "neutral")), directed_music_cue, dialogue_system.index, dialogue_system.lines.size(), dialogue_system.is_line_revealed(), choice_labels, dialogue_choice_index)
+	battle_hud.visible = game_state == "battle" and not party_battle.is_empty()
+	if battle_hud.visible:
+		update_battle_hud()
+
+func update_battle_hud() -> void:
+	var turns: Array = []
+	var turn_order := PartyBattleSystem.visible_turn_order(party_battle, 7)
+	for turn_index in turn_order.size():
+		var actor_id := str(turn_order[turn_index])
+		turns.append({"name":enemy_name if actor_id == "enemy" else str(PartyBattleSystem.ally_by_actor_id(party_battle, actor_id).get("name", "—")), "enemy":actor_id == "enemy", "current":turn_index == 0})
+	var party_cards: Array = []
+	var active_actor := PartyBattleSystem.current_actor_id(party_battle)
+	for member in party_battle["allies"] as Array:
+		var statuses: Dictionary = (party_battle["ally_statuses"] as Dictionary).get(str((member as Dictionary)["id"]), {})
+		party_cards.append({"name":member["name"], "hp":member["hp"], "max_hp":member["max_hp"], "mp":member["mp"], "max_mp":member["max_mp"], "status":battle_status_text(statuses), "active":ally_actor_id_for_ui(member) == active_actor})
+	var living := PartyBattleSystem.living_allies(party_battle)
+	var target_name := str(living[battle_target_index]["name"]) if not living.is_empty() and battle_target_index < living.size() else "—"
+	var active_name := str(current_battle_member().get("name", "—"))
+	var enemy_summary := {"name":enemy_name, "phase":party_battle["enemy_phase"], "hp":enemy_hp, "max_hp":enemy_max_hp, "shield":party_battle["shield"], "shield_max":party_battle["shield_max"], "intent":enemy_intent, "weaknesses":", ".join(enemy_data.get("weaknesses", [])), "resistances":", ".join(enemy_data.get("resistances", []))}
+	battle_hud.configure(turns, party_cards, enemy_summary, notification, int(party_battle["resonance"]), BATTLE_COMMANDS, battle_command_index, target_name, active_name)
+
+func update_hd2d_stage(reduced_motion: bool) -> void:
+	if hd2d_stage == null:
+		return
+	var theme_id := ""
+	var texture: Texture2D
+	var stage_origin := camera_system.canvas_origin()
+	var stage_zoom := camera_system.zoom
+	if game_state == "valdoria_explore":
+		theme_id = "valdoria"
+		texture = CITY_VALDORIA
+	elif game_state == "dungeon":
+		theme_id = "catacombs"
+		texture = VALDORIA_CATACOMBS
+	elif game_state == "dungeon_crawl" and current_dungeon == "eira_ruins":
+		theme_id = "eira"
+		texture = VALDORIA_CATACOMBS
+		stage_origin = Vector2.ZERO
+		stage_zoom = 1.0
+	if theme_id.is_empty():
+		hd2d_stage.deactivate()
+	else:
+		hd2d_stage.present(theme_id, texture, stage_origin, stage_zoom, world_time, reduced_motion)
+
 func _input(event: InputEvent) -> void:
+	InputProfileSystem.observe(event)
 	if not event.is_pressed() or event.is_echo():
 		return
 	match game_state:
@@ -377,32 +437,42 @@ func _input(event: InputEvent) -> void:
 	queue_redraw()
 
 func is_menu_event(event: InputEvent) -> bool:
-	if event.is_action_pressed("ui_cancel"):
-		return true
-	if event is InputEventKey:
-		var key_event := event as InputEventKey
-		return key_event.keycode == KEY_M or key_event.keycode == KEY_TAB
-	return false
+	return event.is_action_pressed("ui_cancel") or event.is_action_pressed("open_menu")
+
+func play_audio_event(event_id: String) -> void:
+	if audio_director != null:
+		audio_director.play_event(event_id)
 
 func handle_title_input(event: InputEvent) -> void:
-	if event is InputEventKey and (event as InputEventKey).pressed and (event as InputEventKey).keycode == KEY_V:
+	if event.is_action_pressed("vertical_demo"):
 		start_vertical_slice_demo()
 	elif event.is_action_pressed("ui_up"):
 		title_index = wrapi(title_index - 1, 0, TITLE_OPTIONS.size())
+		play_audio_event("ui_move")
 	elif event.is_action_pressed("ui_down"):
 		title_index = wrapi(title_index + 1, 0, TITLE_OPTIONS.size())
+		play_audio_event("ui_move")
 	elif event.is_action_pressed("ui_accept"):
-		match title_index:
-			0:
-				start_vertical_slice_demo()
-			1:
-				new_game()
-			2:
-				open_load_menu("title")
-			3:
-				open_settings("title")
-			4:
-				get_tree().quit()
+		play_audio_event("ui_accept")
+		activate_title_option(title_index)
+
+func _on_title_option_activated(index: int) -> void:
+	title_index = clampi(index, 0, TITLE_OPTIONS.size() - 1)
+	play_audio_event("ui_accept")
+	activate_title_option(title_index)
+
+func activate_title_option(index: int) -> void:
+	match index:
+		0:
+			start_vertical_slice_demo()
+		1:
+			new_game()
+		2:
+			open_load_menu("title")
+		3:
+			open_settings("title")
+		4:
+			get_tree().quit()
 
 func start_vertical_slice_demo() -> void:
 	new_game()
@@ -505,12 +575,14 @@ func handle_dialogue_input(event: InputEvent) -> void:
 		elif event.is_action_pressed("ui_down") and dialogue_system.is_line_revealed() and not choices.is_empty():
 			dialogue_choice_index = wrapi(dialogue_choice_index + 1, 0, choices.size())
 		elif event.is_action_pressed("ui_accept"):
+			play_audio_event("dialogue_advance")
 			if not dialogue_system.is_line_revealed():
 				dialogue_system.reveal_line()
 			else:
 				advance_directed_scene(dialogue_choice_index if not choices.is_empty() else -1)
 		return
 	if event.is_action_pressed("ui_accept"):
+		play_audio_event("dialogue_advance")
 		if dialogue_system.advance():
 			finish_dialogue()
 		else:
@@ -518,6 +590,7 @@ func handle_dialogue_input(event: InputEvent) -> void:
 			action_time = 0.0
 			action_duration = 0.22
 	elif event.is_action_pressed("ui_cancel"):
+		play_audio_event("ui_cancel")
 		finish_dialogue()
 
 func handle_world_map_input(event: InputEvent) -> void:
@@ -534,12 +607,10 @@ func handle_world_map_input(event: InputEvent) -> void:
 			enter_world_location(str(destination["id"]))
 		else:
 			show_notification("La ruta sigue bloqueada por el capítulo, la bruma o el mar.")
-	elif event is InputEventKey:
-		var key_event := event as InputEventKey
-		if key_event.keycode == KEY_C:
-			camp_on_world_map()
-		elif key_event.keycode == KEY_F:
-			fast_travel_to_next_camp()
+	elif event.is_action_pressed("camp"):
+		camp_on_world_map()
+	elif event.is_action_pressed("fast_travel"):
+		fast_travel_to_next_camp()
 
 func handle_city_input(event: InputEvent) -> void:
 	if city_activity_active:
@@ -602,7 +673,7 @@ func handle_dungeon_crawl_input(event: InputEvent) -> void:
 		var move_result := DungeonExplorationSystem.move(dungeon_exploration_state, direction)
 		if bool(move_result.get("success", false)):
 			facing_direction = CharacterAnimationSystem.direction_from_vector(Vector2(direction), facing_direction)
-			action_animation = "run" if Input.is_key_pressed(KEY_SHIFT) else "walk"
+			action_animation = "run" if Input.is_action_pressed("run") else "walk"
 			action_time = 0.0
 			action_duration = 0.14
 			show_notification(str(move_result.get("message", "")))
@@ -669,10 +740,11 @@ func handle_battle_input(event: InputEvent) -> void:
 		battle_target_index = wrapi(battle_target_index + 1, 0, maxi(1, PartyBattleSystem.living_allies(party_battle).size()))
 	elif event.is_action_pressed("ui_accept"):
 		execute_battle_command(battle_command_index)
-	elif event is InputEventKey:
-		var key_event := event as InputEventKey
-		if key_event.pressed and not key_event.echo and key_event.keycode >= KEY_1 and key_event.keycode <= KEY_8:
-			execute_battle_command(int(key_event.keycode - KEY_1))
+	else:
+		for command_index in BATTLE_COMMANDS.size():
+			if event.is_action_pressed("battle_command_%d" % (command_index + 1)):
+				execute_battle_command(command_index)
+				break
 
 func execute_battle_command(index: int) -> void:
 	battle_command_index = clampi(index, 0, BATTLE_COMMANDS.size() - 1)
@@ -1572,6 +1644,7 @@ func process_world_movement(_delta: float) -> void:
 		check_dungeon_encounters()
 
 func handle_world_interaction(kind: String) -> void:
+	play_audio_event("interaction")
 	if game_state == "explore":
 		handle_sanctuary_interaction(kind)
 	elif game_state == "valdoria_explore":
@@ -1833,6 +1906,7 @@ func crystal_art() -> void:
 	perform_party_battle_action("art")
 
 func heal_in_battle() -> void:
+	play_audio_event("heal")
 	perform_party_battle_action("heal", {"target_index": battle_target_index})
 
 func perform_party_battle_action(action_id: String, args: Dictionary = {}) -> void:
@@ -1858,6 +1932,8 @@ func perform_party_battle_action(action_id: String, args: Dictionary = {}) -> vo
 	battle_target_index = clampi(battle_target_index, 0, maxi(0, PartyBattleSystem.living_allies(party_battle).size() - 1)) if not party_battle.is_empty() else 0
 
 func start_battle_impact(damage: int, element: String, weak: bool) -> void:
+	if damage > 0:
+		play_audio_event("weakness" if weak else "battle_impact")
 	battle_impact_time = 0.0
 	battle_impact_damage = damage
 	battle_impact_element = CombatPresentationSystem.normalized_element(element)
@@ -2113,6 +2189,8 @@ func manual_save() -> void:
 func autosave() -> void:
 	if not SaveSystem.save_autosave(save_payload(), save_base_dir):
 		GameLogger.warning("save", "Autosave failed")
+	else:
+		play_audio_event("save")
 
 func load_saved_game() -> void:
 	var data := SaveSystem.load_slot(1, save_base_dir)
@@ -2264,7 +2342,11 @@ func character_source(sheet: Texture2D, character_index: int) -> Rect2:
 func draw_character(sheet: Texture2D, character_index: int, feet_position: Vector2, display_size: Vector2, animation: String, tint: Color = Color.WHITE) -> void:
 	if sheet == PARTY_SHEET:
 		if character_index >= 4:
-			GameUI.character(self, PHASE10_PARTY, character_index - 4, feet_position, display_size, animation, world_time, walk_time, action_time, tint)
+			var unique_direction := "east" if game_state == "battle" else (facing_direction if game_state in ["explore", "valdoria_explore", "dungeon", "dungeon_crawl", "world_map"] else "south")
+			var unique_elapsed := action_time if action_duration > 0.0 and CharacterAnimationSystem.validate_state(animation) else world_time
+			if animation in ["walk", "run", "travel"]:
+				unique_elapsed = walk_time if is_moving else action_time
+			GameUI.unique_party_character(self, PHASE10_FIELD_PARTY, character_index, feet_position, display_size, animation, unique_direction, unique_elapsed, tint, PHASE10_FIELD_PARTY_BACK)
 			return
 		var direction := "east" if game_state == "battle" else (facing_direction if game_state in ["explore", "valdoria_explore", "dungeon", "dungeon_crawl", "world_map"] else "south")
 		var elapsed := action_time if action_duration > 0.0 and CharacterAnimationSystem.validate_state(animation) else world_time
@@ -2298,27 +2380,6 @@ func draw_background_for(location_id: String) -> void:
 		draw_texture_rect(VALDORIA_CATACOMBS, WORLD, false)
 	else:
 		draw_texture_rect(city_texture(location_id), WORLD, false)
-
-func draw_title() -> void:
-	draw_texture_rect(WORLD_MAP, WORLD, false)
-	draw_rect(WORLD, Color(0.01, 0.025, 0.07, 0.66), true)
-	for radius in [90.0, 145.0, 210.0]:
-		draw_circle(Vector2(480, 170), radius + sin(world_time * 1.6) * 4.0, Color(0.16, 0.65, 1.0, 0.035))
-	draw_string(ThemeDB.fallback_font, Vector2(267, 122), "CRÓNICAS DEL CRISTAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 34, Color("bff5ff"))
-	draw_string(ThemeDB.fallback_font, Vector2(330, 158), "LA CORONA HUECA", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("f5d88f"))
-	draw_character(PARTY_SHEET, 0, Vector2(220, 450), Vector2(190, 286), "idle")
-	draw_character(PARTY_SHEET, 1, Vector2(740, 450), Vector2(190, 286), "idle")
-	draw_rect(Rect2(325, 194, 310, 250), Color("06101ade"), true)
-	draw_rect(Rect2(325, 194, 310, 250), Color("cdbb78"), false, 2)
-	for i in TITLE_OPTIONS.size():
-		var selected := i == title_index
-		var color := Color("ffe5a3") if selected else Color("c4d1dc")
-		if i == 2 and not has_any_save():
-			color = Color("66717d")
-		var prefix := "◆ " if selected else "  "
-		draw_string(ThemeDB.fallback_font, Vector2(360, 230 + i * 40), prefix + TITLE_OPTIONS[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
-	draw_string(ThemeDB.fallback_font, Vector2(330, 468), "%d diálogos · 8 héroes · 3 ranuras · autoguardado" % (StoryData.dialogue_count() + Phase3StoryData.dialogue_count() + hero_story_system.dialogue_count()), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("a8c4d2"))
-	draw_string(ThemeDB.fallback_font, Vector2(330, 490), "VERTICAL SLICE · VALDORIA / CATACUMBAS / EIRA", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("9ee8d1"))
 
 func has_any_save() -> bool:
 	return SaveSystem.has_autosave(save_base_dir) or SaveSystem.has_slot(1, save_base_dir) or SaveSystem.has_slot(2, save_base_dir) or SaveSystem.has_slot(3, save_base_dir)
@@ -2598,7 +2659,6 @@ func draw_valdoria_exploration() -> void:
 			var nearby := hero_position.distance_to(world_position) < 55.0
 			var tint: Color = [Color("e6c88d"), Color("9ccbe8"), Color("d8a5c8"), Color("9ec7a3")][npc_index % 4]
 			GameUI.animated_party_character(self, PARTY_ANIMATION_ATLAS, npc_index % 4, screen_position + Vector2(0, 10) * depth_scale, Vector2(61, 92) * depth_scale, "talk" if nearby else "idle", "south", npc_animation_elapsed, tint)
-	draw_exploration_hud("VALDORIA · PLAZA DEL LEÓN", QuestSystem.objective(phase3_state))
 
 func draw_dungeon() -> void:
 	draw_exploration_background(VALDORIA_CATACOMBS)
@@ -2635,13 +2695,13 @@ func draw_dungeon() -> void:
 			var runtime: Dictionary = entry["data"]
 			var size := Vector2(102, 102) if str(runtime["rank"]) == "normal" else Vector2(145, 145) if str(runtime["rank"]) == "miniboss" else Vector2(178, 160)
 			GameUI.grid_sprite(self, PHASE3_ENEMY_SHEET, int(runtime["sprite_index"]), screen_position + Vector2(0, 10) * depth_scale, size * depth_scale, "idle", world_time, action_time)
-	draw_exploration_hud("CATACUMBAS DEL LEÓN DORMIDO", QuestSystem.objective(phase3_state))
 
 func dungeon_iso_position(cell: Vector2i) -> Vector2:
 	return Vector2(420.0 + float(cell.x - cell.y) * 34.0, 180.0 + float(cell.x + cell.y) * 14.0)
 
 func draw_dungeon_crawl() -> void:
-	draw_texture_rect(VALDORIA_CATACOMBS, WORLD, false)
+	if hd2d_stage == null or not hd2d_stage.is_active():
+		draw_texture_rect(VALDORIA_CATACOMBS, WORLD, false)
 	draw_rect(WORLD, Color(0.015, 0.025, 0.055, 0.78), true)
 	var definition := DungeonExplorationSystem.dungeon(current_dungeon)
 	var floor_index := DungeonExplorationSystem.current_floor(dungeon_exploration_state)
@@ -2695,31 +2755,13 @@ func draw_dungeon_crawl() -> void:
 	draw_wrapped_text(notification if not notification.is_empty() else DungeonExplorationSystem.tile_hint(DungeonExplorationSystem.tile_at(floor_index, player_cell, current_dungeon)), Vector2(36, 477), 75, 17.0, 13, Color.WHITE)
 
 func draw_exploration_background(texture: Texture2D) -> void:
+	if hd2d_stage != null and hd2d_stage.is_active():
+		return
 	var camera_origin := camera_system.canvas_origin()
 	var camera_scale := Vector2.ONE * camera_system.zoom
 	draw_set_transform(camera_origin, 0.0, camera_scale)
 	draw_texture_rect(texture, WORLD, false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-func draw_exploration_hud(title: String, objective: String) -> void:
-	draw_rect(Rect2(18, 16, 530, 86), Color("06101aee"), true)
-	draw_string(ThemeDB.fallback_font, Vector2(35, 44), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("bff5ff"))
-	draw_wrapped_text(objective, Vector2(35, 69), 70, 16.0, 12, Color.WHITE)
-	var nearby := sanctuary_controller.nearest_interaction()
-	if not nearby.is_empty() and action_duration <= 0.0:
-		draw_rect(Rect2(285, 438, 390, 34), Color("10283cf2"), true)
-		draw_string(ThemeDB.fallback_font, Vector2(303, 461), "E / ESPACIO · %s" % interaction_label(nearby), HORIZONTAL_ALIGNMENT_CENTER, 354, 13, Color("ffe5a3"))
-	if not notification.is_empty():
-		draw_rect(Rect2(145, 480, 670, 42), Color("06101ae8"), true)
-		draw_wrapped_text(notification, Vector2(165, 502), 85, 16.0, 13, Color.WHITE)
-	draw_vertical_slice_tracker()
-
-func draw_vertical_slice_tracker() -> void:
-	var next := VerticalSliceSystem.next_milestone(phase3_state, dungeon_defeated, dungeon_exploration_state, narrative_state)
-	var completion := VerticalSliceSystem.completion_percent(phase3_state, dungeon_defeated, dungeon_exploration_state, narrative_state)
-	draw_rect(Rect2(650, 104, 290, 48), Color("06101ad9"), true)
-	draw_string(ThemeDB.fallback_font, Vector2(664, 122), "RUTA VERTICAL %.0f%%" % completion, HORIZONTAL_ALIGNMENT_LEFT, 260, 11, Color("9ee8d1"))
-	draw_string(ThemeDB.fallback_font, Vector2(664, 142), str(next.get("label", "Vertical slice completada")), HORIZONTAL_ALIGNMENT_LEFT, 260, 11, Color.WHITE)
 
 func draw_dialogue() -> void:
 	var metadata := dialogue_system.current_metadata()
@@ -2737,10 +2779,8 @@ func draw_dialogue() -> void:
 	draw_rect(WORLD, Color(0.01, 0.025, 0.07, 0.34), true)
 	if dialogue_system.lines.is_empty():
 		return
-	var safe_index: int = clampi(dialogue_system.index, 0, dialogue_system.lines.size() - 1)
 	var line: Array = dialogue_system.current_pair()
 	var speaker: String = str(line[0])
-	var text: String = dialogue_system.visible_text()
 	var expression := str(metadata.get("expression", "neutral"))
 	var expression_animation := "celebrate" if expression in ["happy", "hopeful"] else "special" if expression == "determined" else "hurt" if expression in ["sad", "annoyed"] else "talk"
 	var members := HeroStorySystem.active_party(party)
@@ -2755,60 +2795,18 @@ func draw_dialogue() -> void:
 			movement_offset.y = -abs(sin(directed_scene_elapsed * 2.2)) * (5.0 if speaking else 1.5)
 		draw_shadow(Vector2(start_x + i * spacing, 377), 22.0, 0.5)
 		draw_character(PARTY_SHEET, party_index, Vector2(start_x + i * spacing, 377) + movement_offset, Vector2(125, 188), expression_animation if speaking else "idle", tint)
-	draw_rect(Rect2(48, 350, 864, 168), Color("050c16f5"), true)
-	draw_rect(Rect2(48, 350, 864, 168), Color("d5c47f"), false, 2)
-	draw_rect(Rect2(72, 329, 250, 39), Color("13283af8"), true)
-	draw_string(ThemeDB.fallback_font, Vector2(88, 355), speaker.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, NarrativeDirectionSystem.expression_color(expression))
-	if not metadata.is_empty():
-		draw_string(ThemeDB.fallback_font, Vector2(325, 355), "%s · %s" % [expression.to_upper(), directed_music_cue.to_upper()], HORIZONTAL_ALIGNMENT_LEFT, 420, 11, Color("8fe8ff"))
-		var portrait_ids := {"aren":0, "lyra":1, "brom":2, "seris":3, "naia":4, "kael":5, "mira":6, "orin":7}
-		var portrait_id := str(metadata.get("portrait", "")).to_lower()
-		var portrait_index := int(portrait_ids.get(portrait_id, -1))
-		if portrait_index < 0:
-			for member_index in party.size():
-				if str((party[member_index] as Dictionary).get("name", "")).to_lower() == speaker.to_lower(): portrait_index = member_index; break
-		portrait_index = maxi(0, portrait_index)
-		draw_rect(Rect2(66, 378, 91, 111), Color("10283c"), true)
-		draw_rect(Rect2(66, 378, 91, 111), Color("ffe5a3"), false, 1.5)
-		draw_story_portrait(portrait_index, Vector2(111, 486), Vector2(78, 117), expression_animation, Color("e6c98c") if str(metadata.get("portrait", "")) == "elara" else Color.WHITE)
-	var dialogue_text_x := 174.0 if not metadata.is_empty() else 78.0
-	draw_wrapped_text(text, Vector2(dialogue_text_x, 399), 78 if not metadata.is_empty() else 92, 21.0, 16, Color.WHITE)
-	var choices := narrative_system.current_choices(narrative_state) if not active_directed_scene.is_empty() else []
-	if dialogue_system.is_line_revealed() and not choices.is_empty():
-		for i in choices.size():
-			var selected := i == dialogue_choice_index
-			var choice_rect := Rect2(174, 447 + i * 28, 628, 24)
-			draw_rect(choice_rect, Color("17354d") if selected else Color("0b1c2b"), true)
-			var choice: Dictionary = choices[i] as Dictionary
-			var directed_label := str(choice.get("text", "")) + "  " + NarrativeDirectionSystem.choice_hint(choice)
-			draw_string(ThemeDB.fallback_font, choice_rect.position + Vector2(8, 17), ("◆ " if selected else "  ") + directed_label, HORIZONTAL_ALIGNMENT_LEFT, 610, 12, Color("ffe5a3") if selected else Color.WHITE)
-	var prompt := "Enter: mostrar texto" if not dialogue_system.is_line_revealed() else "Enter: continuar"
-	if not choices.is_empty(): prompt = "↑/↓ elegir · Enter confirmar"
-	var prompt_y := 511.0 if not choices.is_empty() else 500.0
-	draw_string(ThemeDB.fallback_font, Vector2(660, prompt_y), "%s  ◆  %d/%d" % [prompt, safe_index + 1, dialogue_system.lines.size()], HORIZONTAL_ALIGNMENT_LEFT, 230, 11, Color("a8c4d2"))
 
 func draw_battle() -> void:
 	draw_texture_rect(VALDORIA_CATACOMBS if battle_context in ["dungeon", "phase9_dungeon"] else WORLD_MAP if battle_context in ["world", "landmark"] else SANCTUARY, WORLD, false)
 	draw_rect(WORLD, Color(0.01, 0.025, 0.06, 0.66), true)
 	if party_battle.is_empty(): return
-	var active_member := current_battle_member()
 	var active_actor := PartyBattleSystem.current_actor_id(party_battle)
 	var allies: Array = party_battle["allies"]
 	var living := PartyBattleSystem.living_allies(party_battle)
-	var turn_order := PartyBattleSystem.visible_turn_order(party_battle, 7)
 	var impact_progress := clampf(battle_impact_time / battle_impact_duration, 0.0, 1.0)
 	var reduced_motion := bool((completion_state.get("accessibility", {}) as Dictionary).get("reduced_motion", false))
 	var shake_amount := CombatPresentationSystem.shake_amplitude(battle_impact_damage, battle_impact_weak, reduced_motion)
 	var impact_shake := CombatPresentationSystem.shake_offset(battle_impact_time, shake_amount) if battle_impact_time < battle_impact_duration else Vector2.ZERO
-	# Orden de turnos siempre visible.
-	draw_rect(Rect2(18, 10, 924, 36), Color("06101af2"), true)
-	draw_string(ThemeDB.fallback_font, Vector2(32, 34), "TURNOS", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("7edcff"))
-	for i in turn_order.size():
-		var actor_id := str(turn_order[i])
-		var label := enemy_name if actor_id == "enemy" else str(PartyBattleSystem.ally_by_actor_id(party_battle, actor_id).get("name", "—"))
-		var rect := Rect2(105 + i * 116, 15, 106, 25)
-		draw_rect(rect, Color("743846") if actor_id == "enemy" else Color("173f59"), true)
-		draw_string(ThemeDB.fallback_font, rect.position + Vector2(5, 18), ("◆ " if i == 0 else "") + label, HORIZONTAL_ALIGNMENT_CENTER, 96, 12, Color("ffe5a3") if i == 0 else Color.WHITE)
 	# Grupo activo y estado de cada miembro.
 	for i in allies.size():
 		var member: Dictionary = allies[i]
@@ -2820,14 +2818,6 @@ func draw_battle() -> void:
 		if is_target: draw_arc(Vector2(x, 283), 38.0, 0, TAU, 24, Color("79e9ff"), 2.0)
 		var member_anim := action_animation if is_active else "idle"
 		draw_character(PARTY_SHEET, party.find(member), Vector2(x, 294), Vector2(88, 132), member_anim, Color(0.45, 0.48, 0.52) if int(member["hp"]) <= 0 else Color.WHITE)
-		var card := Rect2(x - 52, 303, 104, 76)
-		draw_rect(card, Color("07101aef"), true)
-		draw_rect(card, Color("ffe195") if is_active else Color("405669"), false, 1.5)
-		draw_string(ThemeDB.fallback_font, card.position + Vector2(7, 18), str(member["name"]).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, 90, 12, Color("ffe5a3"))
-		draw_bar(card.position + Vector2(7, 25), Vector2(90, 11), int(member["hp"]), int(member["max_hp"]), Color("4fc279"))
-		draw_bar(card.position + Vector2(7, 41), Vector2(90, 10), int(member["mp"]), int(member["max_mp"]), Color("4f91dc"))
-		var statuses: Dictionary = (party_battle["ally_statuses"] as Dictionary).get(str(member["id"]), {})
-		draw_string(ThemeDB.fallback_font, card.position + Vector2(7, 68), battle_status_text(statuses), HORIZONTAL_ALIGNMENT_LEFT, 92, 10, Color("ff9fa8") if not statuses.is_empty() else Color("8295a3"))
 	# Rival, fase de IA, afinidades y ruptura.
 	var enemy_anchor := Vector2(730, 350) + impact_shake
 	draw_shadow(enemy_anchor - Vector2(0, 20), 58.0, 0.58)
@@ -2844,32 +2834,6 @@ func draw_battle() -> void:
 		if battle_impact_damage > 0:
 			var damage_position := enemy_anchor + Vector2(-65, -118 - impact_progress * 34.0)
 			draw_string(ThemeDB.fallback_font, damage_position, ("¡RUPTURA! " if battle_impact_weak else "") + str(battle_impact_damage), HORIZONTAL_ALIGNMENT_CENTER, 130, 24 if battle_impact_weak else 20, CombatPresentationSystem.color(battle_impact_element))
-	draw_rect(Rect2(548, 55, 394, 102), Color("07101aef"), true)
-	draw_string(ThemeDB.fallback_font, Vector2(564, 78), "%s · FASE %d" % [enemy_name.to_upper(), int(party_battle["enemy_phase"])], HORIZONTAL_ALIGNMENT_LEFT, 360, 15, Color("ffb3b3"))
-	draw_bar(Vector2(564, 88), Vector2(356, 14), enemy_hp, enemy_max_hp, Color("d85163"))
-	draw_string(ThemeDB.fallback_font, Vector2(564, 121), "RUPTURA %d/%d · INTENCIÓN %s" % [int(party_battle["shield"]), int(party_battle["shield_max"]), enemy_intent.to_upper()], HORIZONTAL_ALIGNMENT_LEFT, 356, 11, Color("ffe09a"))
-	draw_string(ThemeDB.fallback_font, Vector2(564, 143), "Débil: %s  ·  Resiste: %s" % [", ".join(enemy_data.get("weaknesses", [])), ", ".join(enemy_data.get("resistances", []))], HORIZONTAL_ALIGNMENT_LEFT, 356, 11, Color("9edff4"))
-	var enemy_statuses: Dictionary = party_battle["enemy_statuses"]
-	if not enemy_statuses.is_empty(): draw_string(ThemeDB.fallback_font, Vector2(580, 172), battle_status_text(enemy_statuses), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("ff9fa8"))
-	if str(enemy_data.get("rank", "normal")) == "boss":
-		draw_rect(Rect2(548, 162, 394, 30), Color("2b1021e8"), true)
-		draw_string(ThemeDB.fallback_font, Vector2(560, 182), VerticalSliceSystem.boss_directive(int(party_battle["enemy_phase"]), int(party_battle["shield"])), HORIZONTAL_ALIGNMENT_LEFT, 372, 11, Color("ffd3a1"))
-	# Registro, Resonancia y ocho comandos.
-	draw_rect(Rect2(18, 389, 924, 143), Color("06101af5"), true)
-	draw_rect(Rect2(18, 389, 924, 143), Color("d5c47f"), false, 2)
-	draw_wrapped_text(notification, Vector2(34, 410), 112, 16.0, 12, Color.WHITE)
-	var resonance := int(party_battle["resonance"])
-	draw_string(ThemeDB.fallback_font, Vector2(708, 412), "RESONANCIA  %s" % ("◆".repeat(resonance) + "◇".repeat(PartyBattleSystem.MAX_RESONANCE - resonance)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("7eeaff"))
-	for i in BATTLE_COMMANDS.size():
-		var column := i % 4
-		var row := i / 4
-		var command_rect := Rect2(34 + column * 226, 454 + row * 34, 214, 28)
-		var selected := i == battle_command_index
-		var enabled := not (i == 6 and resonance < PartyBattleSystem.COMBO_COST)
-		draw_rect(command_rect, Color("17435b") if selected else Color("0b1d2b"), true)
-		draw_string(ThemeDB.fallback_font, command_rect.position + Vector2(9, 20), "%d · %s" % [i + 1, BATTLE_COMMANDS[i]], HORIZONTAL_ALIGNMENT_LEFT, 190, 13, Color("ffe5a3") if selected and enabled else Color.WHITE if enabled else Color("596873"))
-	var target_name := str(living[battle_target_index]["name"]) if not living.is_empty() and battle_target_index < living.size() else "—"
-	draw_string(ThemeDB.fallback_font, Vector2(34, 526), "↑/↓ comando · ←/→ objetivo: %s · Actúa: %s" % [target_name, str(active_member.get("name", "—"))], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("9ab5c4"))
 
 func ally_actor_id_for_ui(member: Dictionary) -> String:
 	return PartyBattleSystem.ally_actor_id(member)
@@ -3123,23 +3087,6 @@ func draw_extras_menu() -> void:
 		y += 34.0
 	draw_wrapped_text("Enter ejecuta la opción. El mercado rota tras cada compra; la arena se abre al completar el final común.", Vector2(505, 398), 45, 16.0, 12, Color("a8c4d2"))
 
-func draw_victory() -> void:
-	draw_texture_rect(SANCTUARY, WORLD, false)
-	draw_rect(WORLD, Color(0.01, 0.03, 0.08, 0.68), true)
-	for radius in [75.0, 125.0, 180.0]:
-		draw_circle(Vector2(480, 235), radius + sin(world_time * 2.0) * 5.0, Color(0.2, 0.75, 1.0, 0.05))
-	for i in party.size():
-		var row := i / 4
-		var column := i % 4
-		draw_character(PARTY_SHEET, i, Vector2(300 + column * 120, 350 + row * 115), Vector2(78, 117), "celebrate")
-	draw_rect(Rect2(170, 92, 620, 190), Color("07101af2"), true)
-	draw_rect(Rect2(170, 92, 620, 190), Color("74e9ff"), false, 3)
-	var vertical_complete := bool((narrative_state.get("variables", {}) as Dictionary).get("vertical_slice_complete", false))
-	draw_string(ThemeDB.fallback_font, Vector2(250 if vertical_complete else 295, 150), "DEMO VERTICAL COMPLETADA" if vertical_complete else "EL JURAMENTO RESTAURADO", HORIZONTAL_ALIGNMENT_LEFT, -1, 29, Color("baf6ff"))
-	var victory_text := "Valdoria recuerda sus nombres y Eira vuelve a escuchar. El camino hacia la Corona Hueca queda abierto." if vertical_complete else "Eryndor conserva sus recuerdos. La corona deja de pertenecer a un rey y vuelve a ser la promesa de todos sus pueblos."
-	draw_wrapped_text(victory_text, Vector2(228, 194), 66, 23.0, 17, Color.WHITE)
-	draw_string(ThemeDB.fallback_font, Vector2(343, 264), "Pulsa ENTER para volver al título", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("ffe5a3"))
-
 func draw_notification() -> void:
 	if notification_time <= 0.0 or game_state in ["city", "explore", "valdoria_explore", "dungeon", "dungeon_crawl", "game_menu", "battle"]:
 		return
@@ -3149,7 +3096,7 @@ func draw_notification() -> void:
 func _draw() -> void:
 	match game_state:
 		"title":
-			draw_title()
+			pass
 		"settings":
 			draw_settings()
 		"save_menu":
@@ -3177,7 +3124,7 @@ func _draw() -> void:
 		"game_menu":
 			draw_game_menu()
 		"victory":
-			draw_victory()
+			pass
 	draw_notification()
 	if scene_router.transition_alpha > 0.0:
 		draw_rect(WORLD, Color(0.0, 0.0, 0.0, scene_router.transition_alpha), true)

@@ -106,9 +106,13 @@ func apply_all() -> void:
 func apply_audio() -> void:
 	set_bus_volume("Master", float(values["master_volume"]))
 	ensure_audio_bus("Music")
+	ensure_audio_bus("Ambience")
 	ensure_audio_bus("SFX")
+	ensure_audio_bus("UI")
 	set_bus_volume("Music", float(values["music_volume"]))
+	set_bus_volume("Ambience", float(values["music_volume"]) * 0.82)
 	set_bus_volume("SFX", float(values["sfx_volume"]))
+	set_bus_volume("UI", float(values["sfx_volume"]) * 0.9)
 
 func ensure_audio_bus(bus_name: String) -> void:
 	if AudioServer.get_bus_index(bus_name) >= 0:
@@ -157,3 +161,4 @@ func apply_controls() -> void:
 			var input_event := InputEventKey.new()
 			input_event.physical_keycode = int(key_code)
 			InputMap.action_add_event(action, input_event)
+	InputProfileSystem.configure_actions()

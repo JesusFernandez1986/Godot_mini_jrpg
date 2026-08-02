@@ -1,0 +1,143 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/screens/vertical_slice_hud.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="Panel"]
+bg_color = Color(0.024, 0.063, 0.102, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.31, 0.57, 0.68, 0.7)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="ProgressFill"]
+bg_color = Color(0.318, 0.839, 0.667, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="VerticalSliceHUD" type="CanvasLayer"]
+layer = 15
+visible = false
+script = ExtResource("1_script")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Objective" type="PanelContainer" parent="Root"]
+offset_left = 18.0
+offset_top = 16.0
+offset_right = 548.0
+offset_bottom = 102.0
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Content" type="Control" parent="Root/Objective"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Root/Objective/Content"]
+layout_mode = 0
+offset_left = 17.0
+offset_top = 12.0
+offset_right = 510.0
+offset_bottom = 40.0
+theme_override_colors/font_color = Color(0.749, 0.961, 1, 1)
+theme_override_font_sizes/font_size = 19
+text = "VALDORIA · PLAZA DEL LEÓN"
+
+[node name="Objective" type="Label" parent="Root/Objective/Content"]
+layout_mode = 0
+offset_left = 17.0
+offset_top = 45.0
+offset_right = 510.0
+offset_bottom = 76.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Objetivo"
+autowrap_mode = 2
+
+[node name="PromptBackdrop" type="ColorRect" parent="Root"]
+offset_left = 285.0
+offset_top = 438.0
+offset_right = 675.0
+offset_bottom = 472.0
+color = Color(0.063, 0.157, 0.235, 0.95)
+
+[node name="Prompt" type="Label" parent="Root"]
+offset_left = 285.0
+offset_top = 438.0
+offset_right = 675.0
+offset_bottom = 472.0
+theme_override_colors/font_color = Color(1, 0.898, 0.639, 1)
+theme_override_font_sizes/font_size = 13
+text = "E / ESPACIO · INTERACTUAR"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NotificationBackdrop" type="ColorRect" parent="Root"]
+offset_left = 145.0
+offset_top = 480.0
+offset_right = 815.0
+offset_bottom = 522.0
+color = Color(0.024, 0.063, 0.102, 0.91)
+
+[node name="Notification" type="Label" parent="Root"]
+offset_left = 145.0
+offset_top = 480.0
+offset_right = 815.0
+offset_bottom = 522.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "Notificación"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Route" type="PanelContainer" parent="Root"]
+offset_left = 650.0
+offset_top = 104.0
+offset_right = 940.0
+offset_bottom = 173.0
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="Content" type="Control" parent="Root/Route"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Root/Route/Content"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 8.0
+offset_right = 276.0
+offset_bottom = 26.0
+theme_override_colors/font_color = Color(0.62, 0.91, 0.82, 1)
+theme_override_font_sizes/font_size = 11
+text = "RUTA VERTICAL 0%"
+
+[node name="Next" type="Label" parent="Root/Route/Content"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 28.0
+offset_right = 276.0
+offset_bottom = 47.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "Siguiente objetivo"
+
+[node name="Progress" type="ProgressBar" parent="Root/Route/Content"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 52.0
+offset_right = 276.0
+offset_bottom = 60.0
+theme_override_styles/fill = SubResource("ProgressFill")
+show_percentage = false

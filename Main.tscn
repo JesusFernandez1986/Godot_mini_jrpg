@@ -1,6 +1,21 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource path="res://main.gd" type="Script" id="1"]
+[ext_resource path="res://ui/screens/title_screen.tscn" type="PackedScene" id="2_title"]
+[ext_resource path="res://ui/screens/victory_screen.tscn" type="PackedScene" id="3_victory"]
+[ext_resource path="res://ui/screens/vertical_slice_hud.tscn" type="PackedScene" id="4_slice_hud"]
+[ext_resource path="res://ui/screens/dialogue_hud.tscn" type="PackedScene" id="5_dialogue_hud"]
+[ext_resource path="res://ui/screens/battle_hud.tscn" type="PackedScene" id="6_battle_hud"]
 
 [node name="MiniJRPG" type="Node2D"]
 script = ExtResource("1")
+
+[node name="TitleScreen" parent="." instance=ExtResource("2_title")]
+
+[node name="VictoryScreen" parent="." instance=ExtResource("3_victory")]
+
+[node name="VerticalSliceHUD" parent="." instance=ExtResource("4_slice_hud")]
+
+[node name="DialogueHUD" parent="." instance=ExtResource("5_dialogue_hud")]
+
+[node name="BattleHUD" parent="." instance=ExtResource("6_battle_hud")]

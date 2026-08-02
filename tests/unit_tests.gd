@@ -29,6 +29,9 @@ static func run(suite: TestSuite) -> void:
 	test_camera(suite)
 	test_sanctuary_movement(suite)
 	test_settings(suite)
+	test_audio_director(suite)
+	test_input_profile(suite)
+	test_performance_budgets(suite)
 	test_save_system(suite)
 	test_logger(suite)
 
@@ -617,10 +620,10 @@ static func test_phase10_eight_protagonists(suite: TestSuite) -> void:
 	suite.check(bool(HeroStorySystem.toggle_active(roster, "naia")["success"]), "Un protagonista nuevo puede entrar en el grupo activo")
 	var battle := PartyBattleSystem.create_battle(roster, GameDatabase.enemy_by_id("crypt_rat"))
 	suite.check(not (battle["allies"] as Array).filter(func(member: Dictionary): return str(member["id"]) == "naia").is_empty(), "Los nuevos protagonistas son jugables en combate")
+	var unique_field_sheet: Texture2D = load("res://assets/phase10_field_party.png") as Texture2D
 	for index in range(4, 8):
-		for animation_state in CharacterAnimationSystem.STATES:
-			var region := CharacterAnimationSystem.atlas_region(index, "south", animation_state, 0.2)
-			suite.check(region.position.x >= 0.0 and region.end.x <= 1536.0 and region.position.y >= 0.0 and region.end.y <= 1280.0, "El protagonista %d anima %s dentro del atlas" % [index + 1, animation_state])
+		var region := GameUI.character_source(unique_field_sheet, index - 4)
+		suite.check(region.position.x >= 0.0 and region.end.x <= unique_field_sheet.get_width() and region.position.y >= 0.0 and region.end.y <= unique_field_sheet.get_height(), "El protagonista %d conserva una silueta de campo propia" % (index + 1))
 	suite.check(system.validate_state(released_state).is_empty(), "Historias, vínculos y epílogos producen un estado guardable")
 
 static func test_phase11_bestiary(suite: TestSuite) -> void:
@@ -765,6 +768,18 @@ static func test_character_animation(suite: TestSuite) -> void:
 	suite.equal(atlas.get_height(), 1280, "El atlas contiene ocho filas direccionales sin solapamientos")
 	var atlas_image := atlas.get_image()
 	suite.check(atlas_image.get_pixel(0, 0).a < 0.05, "El fondo del atlas es realmente transparente")
+	var unique_field_sheet: Texture2D = load("res://assets/phase10_field_party.png") as Texture2D
+	suite.equal(unique_field_sheet.get_width(), 1774, "El atlas de campo de los héroes 5–8 conserva cuatro columnas de producción")
+	suite.equal(unique_field_sheet.get_height(), 887, "Las nuevas siluetas mantienen una escala uniforme")
+	var unique_field_image := unique_field_sheet.get_image()
+	suite.check(unique_field_image.get_pixel(0, 0).a < 0.05 and unique_field_image.get_pixel(unique_field_image.get_width() - 1, unique_field_image.get_height() - 1).a < 0.05, "El atlas de campo nuevo usa transparencia real en sus bordes")
+	var unique_back_sheet: Texture2D = load("res://assets/phase10_field_party_back.png") as Texture2D
+	suite.equal(unique_back_sheet.get_size(), unique_field_sheet.get_size(), "Las vistas frontal y posterior comparten la misma cuadrícula")
+	var unique_back_image := unique_back_sheet.get_image()
+	suite.check(unique_back_image.get_pixel(0, 0).a < 0.05 and unique_back_image.get_pixel(unique_back_image.get_width() - 1, unique_back_image.get_height() - 1).a < 0.05, "La vista posterior también usa transparencia real")
+	for unique_index in 4:
+		var unique_region := GameUI.character_source(unique_field_sheet, unique_index)
+		suite.check(unique_region.size.x > 400.0 and unique_region.end.x <= unique_field_sheet.get_width(), "La silueta única %d ocupa una columna independiente" % (unique_index + 5))
 	var enemy_atlas: Texture2D = load("res://assets/phase3_enemies.png") as Texture2D
 	var enemy_image := enemy_atlas.get_image()
 	suite.check(enemy_image.get_pixel(0, 0).a < 0.05, "La hoja de enemigos usa transparencia real")
@@ -840,6 +855,8 @@ static func test_character_animation(suite: TestSuite) -> void:
 	var patrol_origin := Vector2(500, 300)
 	suite.check(WorldPresentationSystem.npc_patrol_position(patrol_origin, 1, 0.0, "día") != WorldPresentationSystem.npc_patrol_position(patrol_origin, 1, 1.0, "día"), "Los NPC recorren rutas animadas")
 	suite.check(WorldPresentationSystem.weather_density("tormenta") > WorldPresentationSystem.weather_density("lluvia suave"), "La tormenta incrementa la densidad de partículas")
+	suite.equal(WorldPresentationSystem.HD2D_PROFILES.size(), 3, "La ruta vertical dispone de tres perfiles escénicos HD-2D")
+	suite.equal(str(WorldPresentationSystem.hd2d_profile("eira").get("id", "")), "eira", "Eira conserva una dirección visual diferenciada")
 	suite.check(NarrativeDirectionSystem.validate().is_empty(), "Las expresiones narrativas tienen una dirección visual consistente")
 	var consequence_choice := {"effects":[{"op":"inc", "key":"valor", "value":1}]}
 	suite.check("valor +1" in NarrativeDirectionSystem.choice_hint(consequence_choice), "Las elecciones anticipan su consecuencia principal")
@@ -911,13 +928,65 @@ static func test_settings(suite: TestSuite) -> void:
 	suite.equal(int(sanitized["resolution_index"]), SettingsManager.RESOLUTIONS.size() - 1, "La resolución se sanea")
 	manager.values = sanitized
 	manager.adjust("control_scheme", 1)
-	suite.equal(InputMap.action_get_events("move_left").size(), 1, "El esquema WASD reasigna los controles")
+	var keyboard_events := InputMap.action_get_events("move_left").filter(func(event: InputEvent): return event is InputEventKey)
+	suite.equal(keyboard_events.size(), 1, "El esquema WASD reasigna los controles sin perder el mando")
 	var path := "user://test_settings.json"
 	suite.check(manager.save_settings(path), "Los ajustes se escriben")
 	var loaded := SettingsManager.new()
 	suite.check(loaded.load_settings(path), "Los ajustes se leen")
 	suite.equal(loaded.values, manager.values, "Los ajustes sobreviven una lectura completa")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+static func test_audio_director(suite: TestSuite) -> void:
+	suite.section("Dirección de audio")
+	suite.check(AudioDirector.validate().is_empty(), "Los cues y eventos de audio cumplen su contrato")
+	suite.equal(AudioDirector.cue_for_context("title"), "title", "El título activa su identidad musical")
+	suite.equal(AudioDirector.cue_for_context("valdoria_explore"), "valdoria", "Valdoria tiene una capa musical propia")
+	suite.equal(AudioDirector.cue_for_context("dungeon"), "catacombs", "Las catacumbas cambian música y ambiente")
+	suite.equal(AudioDirector.cue_for_context("dungeon_crawl", "", "eira_ruins"), "eira", "Eira usa su motivo de exploración")
+	suite.equal(AudioDirector.cue_for_context("battle"), "battle", "El combate selecciona un cue de mayor pulso")
+	suite.equal(AudioDirector.cue_for_context("dialogue", "", "", "council"), "council", "La dirección narrativa prevalece sobre el estado")
+	var impact := AudioDirector.synthesize_event("battle_impact")
+	suite.equal(impact.mix_rate, 22050, "Los efectos sintetizados comparten una frecuencia de mezcla estable")
+	suite.check(impact.data.size() > 1000, "Un impacto produce datos PCM reproducibles")
+	var director := AudioDirector.new()
+	director.ensure_buses()
+	for bus_name in ["Music", "Ambience", "SFX", "UI"]:
+		suite.check(AudioServer.get_bus_index(bus_name) >= 0, "El bus %s está disponible" % bus_name)
+	director.queue_free()
+
+static func test_input_profile(suite: TestSuite) -> void:
+	suite.section("Perfil de entrada")
+	InputProfileSystem.configure_actions()
+	suite.check(InputProfileSystem.validate().is_empty(), "Todas las acciones de juego están centralizadas en InputMap")
+	for action in ["move_left", "move_right", "move_up", "move_down"]:
+		var controller_events := InputMap.action_get_events(action).filter(func(event: InputEvent): return event is InputEventJoypadMotion or event is InputEventJoypadButton)
+		suite.check(not controller_events.is_empty(), "%s dispone de entrada de mando" % action)
+	for command_index in 8:
+		suite.check(InputMap.has_action("battle_command_%d" % (command_index + 1)), "El comando %d no depende de una tecla física en main.gd" % (command_index + 1))
+	var controller_event := InputEventJoypadButton.new()
+	InputProfileSystem.observe(controller_event)
+	suite.equal(InputProfileSystem.prompt("ui_accept"), "A", "Los prompts reaccionan al último dispositivo")
+	var keyboard_event := InputEventKey.new()
+	InputProfileSystem.observe(keyboard_event)
+	suite.equal(InputProfileSystem.prompt("ui_accept"), "ENTER", "El teclado recupera sus prompts contextuales")
+
+static func test_performance_budgets(suite: TestSuite) -> void:
+	suite.section("Presupuestos de rendimiento")
+	suite.check(PerformanceBudgetSystem.validate().is_empty(), "Resoluciones y objetivo de 60 FPS cumplen el contrato")
+	var monitor := PerformanceBudgetSystem.new()
+	for frame_index in 660:
+		monitor.record_frame(1.0 / 60.0 if frame_index % 120 != 0 else 1.0 / 48.0)
+	suite.check(monitor.percentile_frame_time() <= PerformanceBudgetSystem.MAX_P95_FRAME_MS, "El P95 tolera picos aislados sin ocultar degradación sostenida")
+	var healthy := {"p95_frame_ms":16.7, "scene_nodes":420, "draw_calls_2d":510, "render_objects":2100, "texture_memory_mb":180.0}
+	suite.check(PerformanceBudgetSystem.evaluate(healthy).is_empty(), "Una escena dentro de presupuesto supera la puerta de calidad")
+	var overloaded := healthy.duplicate()
+	overloaded["draw_calls_2d"] = PerformanceBudgetSystem.MAX_DRAW_CALLS_2D + 1
+	suite.equal(PerformanceBudgetSystem.evaluate(overloaded).size(), 1, "Un exceso de draw calls falla de forma explícita")
+	for resolution in PerformanceBudgetSystem.SUPPORTED_RESOLUTIONS:
+		var scale := PerformanceBudgetSystem.resolution_scale(resolution)
+		suite.check(is_equal_approx(scale.x, scale.y), "%s conserva el escalado 16:9 sin deformación" % resolution)
+	monitor.queue_free()
 
 static func test_save_system(suite: TestSuite) -> void:
 	suite.section("Persistencia")

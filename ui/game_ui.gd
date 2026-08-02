@@ -120,3 +120,29 @@ static func animated_party_character(canvas: Node2D, atlas: Texture2D, character
 	for spark_position in AnimationFXSystem.interaction_spark_positions(feet_position, safe_animation, elapsed, character_index):
 		var sparkle := 2.0 + sin(elapsed * 19.0 + spark_position.x) * 1.1
 		canvas.draw_circle(spark_position, sparkle, Color("a8f4ff") if safe_animation in ["heal", "special"] else Color("ffe68a"))
+
+static func unique_party_character(canvas: Node2D, sheet: Texture2D, character_index: int, feet_position: Vector2, display_size: Vector2, animation: String, direction: String, elapsed: float, tint: Color = Color.WHITE, back_sheet: Texture2D = null) -> void:
+	var safe_animation := animation if CharacterAnimationSystem.validate_state(animation) else "idle"
+	var uses_back := back_sheet != null and direction in ["north", "northeast", "northwest"]
+	var active_sheet := back_sheet if uses_back else sheet
+	var source := character_source(active_sheet, posmod(character_index - 4, 4))
+	var offset := CharacterAnimationSystem.keyframe_offset(safe_animation, elapsed, character_index, direction)
+	var phase := float(AnimationFXSystem.PROFILE_PHASES[posmod(character_index, AnimationFXSystem.PROFILE_PHASES.size())])
+	if safe_animation in ["walk", "travel"]:
+		offset.y -= absf(sin(elapsed * 11.0 + phase)) * 4.0
+	elif safe_animation == "run":
+		offset.y -= absf(sin(elapsed * 17.0 + phase)) * 7.0
+	elif safe_animation in ["idle", "talk", "defend", "rest"]:
+		offset.y += sin(elapsed * (5.8 if safe_animation == "talk" else 2.2) + phase) * (2.2 if safe_animation == "talk" else 1.3)
+	var pose_scale := AnimationFXSystem.pose_scale(safe_animation, elapsed, character_index)
+	if (not uses_back and direction in ["west", "southwest"]) or (uses_back and direction == "northeast"):
+		pose_scale.x *= -1.0
+	var pose_rotation := AnimationFXSystem.pose_rotation(safe_animation, elapsed, character_index, direction)
+	var pivot := feet_position + offset
+	var destination := Rect2(-display_size.x * 0.5, -display_size.y, display_size.x, display_size.y)
+	canvas.draw_set_transform(pivot, pose_rotation, pose_scale)
+	canvas.draw_texture_rect_region(active_sheet, destination, source, tint)
+	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	for spark_position in AnimationFXSystem.interaction_spark_positions(feet_position, safe_animation, elapsed, character_index):
+		var sparkle := 2.0 + sin(elapsed * 19.0 + spark_position.x) * 1.1
+		canvas.draw_circle(spark_position, sparkle, Color("a8f4ff") if safe_animation in ["heal", "special"] else Color("ffe68a"))

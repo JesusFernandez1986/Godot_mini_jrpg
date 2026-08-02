@@ -22,7 +22,10 @@ class AnimationBoard extends Node2D:
 				var x := 112.0 + character_index * 104.0
 				var y := 108.0 + row * 116.0
 				draw_rect(Rect2(x - 45, y - 100, 90, 105), Color("11151b"), true)
-				GameUI.animated_party_character(self, preload("res://assets/party_animation_atlas_v2.png"), character_index, Vector2(x, y), Vector2(72, 102), state, "south", elapsed, _tint(character_index))
+				if character_index < 4:
+					GameUI.animated_party_character(self, preload("res://assets/party_animation_atlas_v2.png"), character_index, Vector2(x, y), Vector2(72, 102), state, "south", elapsed)
+				else:
+					GameUI.unique_party_character(self, preload("res://assets/phase10_field_party.png"), character_index, Vector2(x, y), Vector2(72, 102), state, "south", elapsed, Color.WHITE, preload("res://assets/phase10_field_party_back.png"))
 				if row == 0: draw_string(ThemeDB.fallback_font, Vector2(x - 18, 18), str(character_index + 1), HORIZONTAL_ALIGNMENT_CENTER, 36, 12, Color("ffe39a"))
 
 	func draw_directions() -> void:
@@ -33,11 +36,10 @@ class AnimationBoard extends Node2D:
 				var x := 112.0 + character_index * 104.0
 				var y := 108.0 + row * 116.0
 				draw_rect(Rect2(x - 45, y - 100, 90, 105), Color("11151b"), true)
-				GameUI.animated_party_character(self, preload("res://assets/party_animation_atlas_v2.png"), character_index, Vector2(x, y), Vector2(72, 102), "walk", direction, elapsed, _tint(character_index))
-
-	func _tint(character_index: int) -> Color:
-		var tints := [Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE, Color("65cfc4"), Color("b67586"), Color("d6b7ef"), Color("d3a35f")]
-		return tints[character_index]
+				if character_index < 4:
+					GameUI.animated_party_character(self, preload("res://assets/party_animation_atlas_v2.png"), character_index, Vector2(x, y), Vector2(72, 102), "walk", direction, elapsed)
+				else:
+					GameUI.unique_party_character(self, preload("res://assets/phase10_field_party.png"), character_index, Vector2(x, y), Vector2(72, 102), "walk", direction, elapsed, Color.WHITE, preload("res://assets/phase10_field_party_back.png"))
 
 func _initialize() -> void:
 	call_deferred("capture_all")
@@ -78,6 +80,8 @@ func capture_game_screens() -> void:
 	await save_game_screen(viewport, game, "screen_title")
 	game.start_vertical_slice_demo()
 	await save_game_screen(viewport, game, "screen_vertical_demo")
+	game.finish_dialogue()
+	await save_game_screen(viewport, game, "screen_valdoria_hd2d")
 	game.new_game()
 	game.game_state = "world_map"
 	game.chapter = 5
@@ -86,6 +90,9 @@ func capture_game_screens() -> void:
 	game.current_city = "celestia"
 	game.game_state = "city"
 	await save_game_screen(viewport, game, "screen_city")
+	game.enter_dungeon()
+	if game.game_state == "dialogue": game.finish_dialogue()
+	await save_game_screen(viewport, game, "screen_catacombs_hd2d")
 	for dungeon_id in DungeonExplorationSystem.DUNGEON_IDS:
 		DungeonExplorationSystem.enter(game.dungeon_exploration_state, dungeon_id)
 		game.current_dungeon = dungeon_id

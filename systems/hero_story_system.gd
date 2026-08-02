@@ -291,7 +291,8 @@ static func antagonist_line(index: int, hero_name: String) -> String:
 		"Tus aliados te abandonarán cuando conozcan el precio completo de tu verdad.",
 		"Inclínate y conservaré una versión de ti que el mundo pueda admirar."
 	]
-	return lines[clampi(index, 0, lines.size() - 1)] % hero_name
+	var template: String = lines[clampi(index, 0, lines.size() - 1)]
+	return template % hero_name if "%s" in template else template
 
 static func closing_line(index: int, boss_name: String, hero_name: String) -> String:
 	var actions := ["acepta caminar junto a los demás", "abre una ruta que otros podrán corregir", "nombra en público aquello que temía", "vence sin reclamar el lugar del vencido"]

@@ -1,0 +1,104 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource path="res://ui/screens/battle_hud.gd" type="Script" id="1"]
+[ext_resource path="res://ui/theme/crystal_theme.tres" type="Theme" id="2"]
+
+[node name="BattleHUD" type="CanvasLayer"]
+layer = 18
+script = ExtResource("1")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2")
+
+[node name="Turns" type="PanelContainer" parent="Root"]
+offset_left = 18.0
+offset_top = 10.0
+offset_right = 942.0
+offset_bottom = 48.0
+
+[node name="Layout" type="HBoxContainer" parent="Root/Turns"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Root/Turns/Layout"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.49, 0.86, 1, 1)
+text = "TURNOS"
+
+[node name="Entries" type="HBoxContainer" parent="Root/Turns/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7
+
+[node name="Enemy" type="PanelContainer" parent="Root"]
+offset_left = 548.0
+offset_top = 55.0
+offset_right = 942.0
+offset_bottom = 158.0
+
+[node name="Layout" type="VBoxContainer" parent="Root/Enemy"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Root/Enemy/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="HP" type="ProgressBar" parent="Root/Enemy/Layout"]
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+show_percentage = false
+
+[node name="Info" type="Label" parent="Root/Enemy/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.91, 0.96, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="Party" type="HBoxContainer" parent="Root"]
+offset_left = 42.0
+offset_top = 306.0
+offset_right = 510.0
+offset_bottom = 380.0
+theme_override_constants/separation = 8
+
+[node name="Commands" type="PanelContainer" parent="Root"]
+offset_left = 18.0
+offset_top = 389.0
+offset_right = 942.0
+offset_bottom = 532.0
+
+[node name="Layout" type="VBoxContainer" parent="Root/Commands"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Top" type="HBoxContainer" parent="Root/Commands/Layout"]
+layout_mode = 2
+
+[node name="Log" type="Label" parent="Root/Commands/Layout/Top"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text_overrun_behavior = 3
+
+[node name="Resonance" type="Label" parent="Root/Commands/Layout/Top"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.49, 0.92, 1, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="Grid" type="GridContainer" parent="Root/Commands/Layout"]
+layout_mode = 2
+columns = 4
+
+[node name="Hint" type="Label" parent="Root/Commands/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61, 0.71, 0.77, 1)
+theme_override_font_sizes/font_size = 10
+

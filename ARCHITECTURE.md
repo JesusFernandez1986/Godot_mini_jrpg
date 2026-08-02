@@ -7,12 +7,13 @@ La base técnica separa contenido, reglas de dominio, persistencia, navegación 
 ## Capas
 
 - `data/`: definiciones `Resource` editables de personajes, objetos, equipo, enemigos, localizaciones y misiones; escenas ramificadas, ciudades vivas y los 32 capítulos personales residen en JSON.
-- `systems/`: reglas deterministas de inventario, equipamiento, fabricación, progresión, narrativa, historias de héroes, mazmorras, bestiario, comercio, facciones, endgame, logros, accesibilidad, diálogo, viaje, mundo explorable, ciudades vivas, combate individual y de grupo, animación y cámara.
-- `world/`: controlador físico del santuario, `CharacterBody2D`, capa de tiles, navegación, obstáculos e interacciones.
+- `systems/`: reglas deterministas de inventario, equipamiento, fabricación, progresión, narrativa, historias de héroes, mazmorras, bestiario, comercio, facciones, endgame, logros, accesibilidad, diálogo, viaje, mundo explorable, ciudades vivas, combate individual y de grupo, animación, cámara, perfil de entrada y presupuestos de rendimiento.
+- `world/`: controlador físico del santuario y escenario HD-2D reutilizable; contiene `CharacterBody2D`, tiles, navegación, obstáculos, interacciones, fondo atmosférico y oclusión de primer plano.
 - `core/`: navegación de estados, ajustes persistentes y registro estructurado.
-- `ui/`: primitivas compartidas de paneles, barras, texto y sprites animados.
+- `ui/`: primitivas compartidas de paneles, barras, texto y sprites animados; `ui/theme/crystal_theme.tres` unifica la identidad y `ui/screens/` contiene escenas independientes de título, victoria, diálogo, combate y HUD de la demo vertical.
+- `audio/`: `AudioDirector` selecciona cues por contexto, realiza transiciones y enruta música, ambiente y eventos a buses dedicados.
 - `save_system.gd`: tres ranuras, autoguardado, checksum, backup, escritura atómica y migraciones.
-- `main.gd`: orquestación, entrada del usuario y composición de las pantallas actuales.
+- `main.gd`: orquestación, entrada del usuario y adaptación de estado; las pantallas extraídas consumen sus datos mediante métodos `configure(...)` y señales.
 - `tests/`: pruebas unitarias y recorrido de integración completo.
 
 ## Estados de navegación
@@ -53,7 +54,7 @@ Los estados de equipo, avance, narrativa, bestiario, comercio, facciones, endgam
 
 `PartyBattleSystem` es una máquina de estado determinista separada de la presentación. Mantiene los cuatro aliados activos, cola de iniciativa, escudo de ruptura, Resonancia, estados alterados, fase/patrón enemigo, resultado, registro y botín.
 
-`main.gd` solo traduce entrada y salida: presenta el orden de turnos, los ocho comandos, las afinidades y la intención enemiga; después sincroniza PV, animaciones, recompensas y retorno a la exploración. Los datos de velocidad, arma, elemento, debilidades, resistencias, escudo, patrones y botín residen en recursos `.tres`.
+`main.gd` solo traduce entrada y salida: adapta el estado para `BattleHUD`, conserva personajes/VFX en el mundo y después sincroniza PV, animaciones, recompensas y retorno a la exploración. Los datos de velocidad, arma, elemento, debilidades, resistencias, escudo, patrones y botín residen en recursos `.tres`.
 
 Las simulaciones llaman al mismo sistema que la partida real. Esto permite ejecutar miles de batallas sin renderizado y validar que ninguna queda bloqueada ni produce PV, escudos o Resonancia fuera de rango.
 
@@ -91,7 +92,7 @@ Los ocho poderes de campo se obtienen directamente del grupo reclutado. Un puzle
 
 `HeroStorySystem` carga `data/stories/phase10_heroes.json`. El contrato exige ocho héroes, cuatro capítulos por héroe, conflicto, antagonista, jefe, seis historias cruzadas y un final común. `hero_story_state` persiste capítulos, resultados, reclutamientos, vínculos, conversaciones cruzadas, decisión final y ocho epílogos variables.
 
-El roster separa `joined` de `active`: pueden reclutarse ocho protagonistas, pero solo cuatro entran en combate. Los cuatro nuevos recursos `CharacterDefinition` reutilizan el atlas direccional con bloques seguros y paletas propias; `assets/phase10_party.png` aporta retratos diferenciados para diálogo y menú.
+El roster separa `joined` de `active`: pueden reclutarse ocho protagonistas, pero solo cuatro entran en combate. `assets/phase10_party.png` aporta los retratos de Naia, Kael, Mira y Orin; `assets/phase10_field_party.png` y `assets/phase10_field_party_back.png` contienen sus siluetas de campo frontal y posterior. Estas vistas comparten perfiles procedurales, efectos y volteo direccional sin reutilizar ni recolorear los bloques de los cuatro héroes iniciales.
 
 ## Sistemas finales
 
@@ -105,13 +106,21 @@ El roster separa `joined` de `active`: pueden reclutarse ocho protagonistas, per
 
 ## Movimiento y presentación
 
-`CharacterAnimationSystem` selecciona regiones del atlas de forma determinista según personaje, estado, dirección y tiempo. Los índices 4–7 reutilizan de forma modular los cuatro bloques de movimiento y aplican paletas propias, mientras los retratos de alta definición siguen siendo únicos. No modifica estadísticas ni posición física.
+`CharacterAnimationSystem` selecciona regiones del atlas de forma determinista según personaje, estado, dirección y tiempo. Aren, Lyra, Brom y Seris usan ocho filas direccionales; los índices 4–7 seleccionan tiras frontal/posterior propias y `AnimationFXSystem` aplica perfiles de paso, carrera, anticipación, impacto, caída e interacción diferenciados. La presentación nunca modifica estadísticas ni posición física.
 
 `SanctuaryController` posee el cuerpo físico, la cápsula de colisión, los límites, los obstáculos, la capa `TileMapLayer`, el agente de navegación y el grafo A*. `CameraSystem` calcula seguimiento y zoom sin desplazar la UI. El render ordena entidades por profundidad y vuelve a dibujar regiones del escenario para producir oclusión real.
 
+`HD2DStage` compone un fondo en `CanvasLayer` negativo y un primer plano en capa positiva. `WorldPresentationSystem` proporciona perfiles para Valdoria, Catacumbas y Eira con gradación, rayos de luz, niebla, motas, viñeta, acento y oclusión. El escenario respeta la opción de movimiento reducido y queda desactivado fuera de esos tres espacios.
+
 ## Ajustes
 
-`SettingsManager` persiste volumen maestro, música, efectos, velocidad del texto, resolución, modo de ventana y esquema de movimiento. Todos los valores se sanean antes de aplicarse.
+`SettingsManager` persiste volumen maestro, música, efectos, velocidad del texto, resolución, modo de ventana y esquema de movimiento. `InputProfileSystem` conserva teclado y mando sobre acciones semánticas de `InputMap`; `main.gd` no consulta teclas físicas. Todos los valores se sanean antes de aplicarse.
+
+## Audio y rendimiento
+
+`AudioDirector` mantiene buses `Music`, `Ambience`, `SFX` y `UI`, selecciona el cue a partir del estado jugable o la dirección narrativa y sintetiza señales cortas reproducibles. El cambio de contexto interpola frecuencia y ganancia para evitar cortes.
+
+`PerformanceBudgetSystem` registra tiempo de frame y expone límites de producción: 60 FPS, P95 máximo de 20 ms, 700 nodos, 800 draw calls 2D, 4.500 objetos de render y 512 MB de texturas. Las cuatro resoluciones soportadas mantienen una base lógica 960×540 y relación 16:9. La suite valida el contrato y `tests/resolution_smoke_test.gd` genera capturas de cada tamaño para revisión real.
 
 ## Añadir contenido
 
@@ -131,7 +140,7 @@ Desde la raíz del repositorio:
   --headless \
   --rendering-method gl_compatibility \
   --rendering-driver opengl3 \
-  --path games/mini_jrpg \
+  --path . \
   --script res://tests/test_runner.gd
 ```
 
